@@ -2,8 +2,30 @@ library(nlme)
 library(emmeans)
 library(performance)
 library(tidyverse)
+library(codyn)
+library(vegan)
 
+#run this for sum of squares
 options(contrasts=c('contr.sum','contr.poly')) #run this first, important to make sure your sum of squares work right
+
+##function for making graphs with summary statistics
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count] <- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+}  
+
 
 #load data
 damage <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/damage_2021_combined.csv")
@@ -15,18 +37,54 @@ damage1 <- damage %>%
   merge(plots, by = "Plot") %>%
   merge(treenum, by = "Tree_num")
 
-#not sure if this is important/needed
-damage1$plot <- as.factor(damage1$plot)
-damage1$X <- as.factor(damage1$X)
-damage1$Sample_period <- as.factor(damage1$Sample_period)
-
 #tried running an ANOVA without repeated measures
 summary(insectherbModel <- aov(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class)*as.factor(Sample_period), data=damage1))
-
 anova(insectherbModel)
 
+
 #this is the model we want but doesn't currently run
-summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class), data=damage1, random=~1|X, correlation=corCompSymm(form=~1|X), control=lmeControl(returnObject = T)))
+summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class), data=damage1, random=~1|uniqueplant_num, correlation=corCompSymm(form=~1|uniqueplant_num), control=lmeControl(returnObject = T)))
+##this model doesn't work because we included plot age class in the fixed effects and there aren't all interactions in all plot age classes (i.e not all species at each plant age class)
+
+# does herbivory change by plot age and species?
+summary(insectherbPlotAgeModel <- glm(Percent_total_herbivory~plot_age*as.factor(Species), data = damage1))
+anova(insectherbPlotAgeModel)
+
+#Percent total herbivory
+##this works!! use this model
+summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(insectherbModel, type = 'sequential')
+emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))
+
+
+#Percent_microbial
+summary(microbialModel <- lme(Percent_microbial~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(microbialModel, type = 'sequential')
+emmeans(microbialModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_microbial", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))
+
+
+#Percent_microbial
+summary(totaldamageModel <- lme(Total_percent_damage~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(microbialModel, type = 'sequential')
+emmeans(microbialModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Total_percent_damage", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))
+
+
+
 
 
 
@@ -43,6 +101,7 @@ check_model(insectherbModel)
 
 #this gives you your p-values
 anova.lme(insectherbModel, type='sequential') 
+
 
 #this gives you the mean and standard errors for each treatment
 emmeans(insectherbModel, pairwise~as.factor(stand_age), adjust="tukey")
