@@ -3,7 +3,7 @@ library(emmeans)
 library(performance)
 library(tidyverse)
 library(codyn)
-library(vegan)
+
 
 #run this for sum of squares
 options(contrasts=c('contr.sum','contr.poly')) #run this first, important to make sure your sum of squares work right
@@ -50,30 +50,61 @@ summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.fac
 summary(insectherbPlotAgeModel <- glm(Percent_total_herbivory~plot_age*as.factor(Species), data = damage1))
 anova(insectherbPlotAgeModel)
 
-#Percent total herbivory
+###Percent total herbivory###
 ##this works!! use this model
 summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
 
 anova.lme(insectherbModel, type = 'sequential')
 emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 
+#Species (F=156.38, p<0.001)
+#Sample period(F= 11.7, p=0.0006)
+#Species*sample period (F=9.29, p=0.0001)
+
+
 ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
   geom_bar(stat='identity', position=position_dodge()) +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Herbivory Damage\n')+
+  xlab(element_blank())+
+  expand_limits(y=4) +
+  annotate("text", x= 0.77, y = 3.5, label= "a", size = 4)+
+  annotate("text", x= 1.23, y = 3.45, label= "a", size = 4)+
+  annotate("text", x= 1.77, y = 2.1, label= "b", size = 4)+
+  annotate("text", x= 2.23, y = 2.6, label= "b", size = 4)+
+  annotate("text", x= 2.77, y = 3.6, label= "a", size = 4)+
+  annotate("text", x= 3.23, y = 3.3, label= "ab", size = 4)
 
 
-#Percent_microbial
+
+###Percent microbial damage###
 summary(microbialModel <- lme(Percent_microbial~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
 
 anova.lme(microbialModel, type = 'sequential')
 emmeans(microbialModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 
+#everything is significant
+
 ggplot(data=barGraphStats(data=damage1, variable="Percent_microbial", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
   geom_bar(stat='identity', position=position_dodge()) +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab(element_blank())+
+  annotate("text", x= 0.77, y = 2.8, label= "c", size = 4)+
+  annotate("text", x= 1.23, y = 2.7, label= "c", size = 4)+
+  annotate("text", x= 1.77, y = 9.5, label= "a", size = 4)+
+  annotate("text", x= 2.23, y = 7.9, label= "b", size = 4)+
+  annotate("text", x= 2.77, y = 8.7, label= "b", size = 4)+
+  annotate("text", x= 3.23, y = 9.5, label= "ab", size = 4)
 
 
-#Percent_microbial
+#Total percent damage
 summary(totaldamageModel <- lme(Total_percent_damage~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
 
 anova.lme(microbialModel, type = 'sequential')
@@ -81,7 +112,19 @@ emmeans(microbialModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust
 
 ggplot(data=barGraphStats(data=damage1, variable="Total_percent_damage", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
   geom_bar(stat='identity', position=position_dodge()) +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Damage\n')+
+  xlab(element_blank())+
+  expand_limits(y=14)+
+  annotate("text", x= 0.77, y = 6.5, label= "d", size = 4)+
+  annotate("text", x= 1.23, y = 6.3, label= "d", size = 4)+
+  annotate("text", x= 1.77, y = 11.6, label= "b", size = 4)+
+  annotate("text", x= 2.23, y = 10.9, label= "c", size = 4)+
+  annotate("text", x= 2.77, y = 12.3, label= "a", size = 4)+
+  annotate("text", x= 3.23, y = 12.6, label= "ab", size = 4)
 
 
 
