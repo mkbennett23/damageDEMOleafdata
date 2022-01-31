@@ -78,7 +78,30 @@ ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFa
   annotate("text", x= 2.77, y = 3.6, label= "a", size = 4)+
   annotate("text", x= 3.23, y = 3.3, label= "ab", size = 4)
 
+ggplot(data=damage1, aes(x=Species, y=Percent_total_herbivory, fill=Age_class))+
+  geom_boxplot()
 
+damageMature <- damage1 %>%
+  filter(Age_class == "Mature")
+
+damageMature$plot_age_class<- as.factor(damageMature$plot_age_class)
+damage1$plot_age_class <- as.factor(damage1$plot_age_class)
+
+ggplot(data=barGraphStats(data=damageMature, variable="Percent_total_herbivory", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Herbivory Damage\n')+
+  xlab(element_blank())
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Herbivory Damage\n')+
+  xlab(element_blank())
 
 ###Percent microbial damage###
 summary(microbialModel <- lme(Percent_microbial~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
@@ -103,12 +126,30 @@ ggplot(data=barGraphStats(data=damage1, variable="Percent_microbial", byFactorNa
   annotate("text", x= 2.77, y = 8.7, label= "b", size = 4)+
   annotate("text", x= 3.23, y = 9.5, label= "ab", size = 4)
 
+ggplot(data=damage1, aes(x=Species, y=Percent_microbial, fill=Age_class))+
+  geom_boxplot()
 
+ggplot(data=barGraphStats(data=damageMature, variable="Percent_microbial", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab(element_blank())
+  
+ggplot(data=barGraphStats(data=damage1, variable="Percent_microbial", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab(element_blank())
+  
 #Total percent damage
 summary(totaldamageModel <- lme(Total_percent_damage~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
 
-anova.lme(microbialModel, type = 'sequential')
-emmeans(microbialModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+anova.lme(totaldamageModel, type = 'sequential')
+emmeans(totaldamageModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 
 ggplot(data=barGraphStats(data=damage1, variable="Total_percent_damage", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
   geom_bar(stat='identity', position=position_dodge()) +
@@ -125,6 +166,188 @@ ggplot(data=barGraphStats(data=damage1, variable="Total_percent_damage", byFacto
   annotate("text", x= 2.23, y = 10.9, label= "c", size = 4)+
   annotate("text", x= 2.77, y = 12.3, label= "a", size = 4)+
   annotate("text", x= 3.23, y = 12.6, label= "ab", size = 4)
+
+ggplot(data=barGraphStats(data=damageMature, variable="Total_percent_damage", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Damage\n')+
+  xlab(element_blank())
+
+
+##chewing model
+summary(chewingModel <- lme(Percent_chewed~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(chewingModel, type = 'sequential')
+emmeans(chewingModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_chewed", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Chewed\n')+
+  xlab(element_blank())+
+  expand_limits(y=5)
+
+ggplot(data=damage1, aes(x=Species, y=Percent_chewed, fill=Age_class))+
+  geom_boxplot()
+
+ggplot(data=barGraphStats(data=damageMature, variable="Percent_chewed", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Chewed\n')+
+  xlab(element_blank())
+
+######skeletonizing
+summary(skeletonizedModel <- lme(Percent_skeletonized~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(skeletonizedModel, type = 'sequential')
+emmeans(skeletonizedModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_skeletonized", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Skeletonized\n')+
+  xlab(element_blank())+
+  expand_limits(y=1)
+
+ggplot(data=damage1, aes(x=Species, y=Percent_skeletonized, fill=Age_class))+
+  geom_boxplot()
+
+ggplot(data=barGraphStats(data=damageMature, variable="Percent_skeletonized", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Skeletonized\n')+
+  xlab(element_blank())
+
+#####mining
+summary(miningModel <- lme(Total_percent_damage~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(miningModel, type = 'sequential')
+emmeans(miningModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_mined", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Mining\n')+
+  xlab(element_blank())+
+  expand_limits(y=1)
+
+ggplot(data=damage1, aes(x=Species, y=Percent_mined, fill=Age_class))+
+  geom_boxplot()
+
+ggplot(data=barGraphStats(data=damageMature, variable="Percent_mined", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Mining\n')+
+  xlab(element_blank())
+
+
+#####percent gall
+summary(percentgallModel <- lme(Total_percent_damage~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(percentgallModel, type = 'sequential')
+emmeans(percentgallModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_gall", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("grey40", "grey"))+
+  ylab('Mean Percent Gall\n')+
+  xlab(element_blank())+
+  expand_limits(y=1.5)
+
+ggplot(data=damage1, aes(x=Species, y=Percent_gall, fill=Age_class))+
+  geom_boxplot()
+
+
+ggplot(data=barGraphStats(data=damageMature, variable="Percent_gall", byFactorNames=c("Species", "plot_age_class")), aes(x=Species, y=mean, fill=plot_age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  ylab('Mean Percent Gall\n')+
+  xlab(element_blank())
+
+
+####Regressions
+##Total herbivory
+herbivory_lm <- lm(Percent_total_herbivory ~ plot_age, data = damage1)
+summary(herbivory_lm)
+
+predictedherbivory <- predict(herbivory_lm, interval = "confidence", level = 0.95) #predicted brain weight for every head size in the data set (also lower and upper bound on confidence interval)
+#predicted
+
+#Create a complete data frame of the original data + the predicted data
+
+full_herbivory <- data.frame(damage1, predictedherbivory)
+#View (full_data)
+
+#Graph the original data + predicted data + confidence interval
+
+ggplot(full_herbivory, aes(x = plot_age, y = Percent_total_herbivory))+
+  geom_point(aes(color= Species))+
+  geom_line(aes(x = plot_age, y = fit)) +
+  geom_ribbon(aes(x = plot_age, ymin = lwr, ymax = upr), alpha = 0.3) +
+  #annotate("text", x = 14, y = 290, label = "y = -7.35x + 161.33")+
+  #annotate("text", x = 14, y = 270, label = "italic(R) ^ 2 == 0.14", parse = TRUE)+
+  ylab('Percent herbivory')+
+  xlab('Plot age')
+ 
+ggplot(damage1, aes(x=plot_age, y=Percent_total_herbivory)) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("red",  "blue", "green")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+##Microbial
+microbial_lm <- lm(Percent_microbial ~ plot_age, data = damage1)
+summary(microbial_lm)
+
+ggplot(damage1, aes(x=plot_age, y=Percent_microbial)) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("red",  "blue", "green")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+
+##stacked bar charts
+herbivorywide <- damage1 %>%
+  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class)
+
+herbivorylong <- gather(herbivorywide, Herbivory_type, Percent_damage, Percent_chewed:Percent_gall, factor_key=TRUE)
+herbivorylong
+
+herbivorylong$Sample_period <- as.factor(herbivorylong$Sample_period)
+
+ggplot(data=barGraphStats(data=herbivorylong, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  facet_wrap(~Species)
+
+damage1$Sample_period <- as.factor(damage1$Sample_period)
+
+ggplot(data=barGraphStats(data=damage1, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity")+
+  facet_wrap(~Species)
 
 
 
