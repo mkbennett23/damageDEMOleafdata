@@ -79,7 +79,7 @@ ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFa
   annotate("text", x= 3.23, y = 3.3, label= "ab", size = 4)
 
 ggplot(data=damage1, aes(x=Species, y=Percent_total_herbivory, fill=Age_class))+
-  geom_boxplot()
+  geom_violin()
 
 damageMature <- damage1 %>%
   filter(Age_class == "Mature")
@@ -289,18 +289,13 @@ ggplot(data=barGraphStats(data=damageMature, variable="Percent_gall", byFactorNa
 
 ####Regressions
 ##Total herbivory
-herbivory_lm <- lm(Percent_total_herbivory ~ plot_age, data = damage1)
+herbivory_lm <- lm(Percent_total_herbivory ~ plot_age*Species, data = damage1)
 summary(herbivory_lm)
 
-predictedherbivory <- predict(herbivory_lm, interval = "confidence", level = 0.95) #predicted brain weight for every head size in the data set (also lower and upper bound on confidence interval)
-#predicted
-
-#Create a complete data frame of the original data + the predicted data
+predictedherbivory <- predict(herbivory_lm, interval = "confidence", level = 0.95) 
 
 full_herbivory <- data.frame(damage1, predictedherbivory)
-#View (full_data)
 
-#Graph the original data + predicted data + confidence interval
 
 ggplot(full_herbivory, aes(x = plot_age, y = Percent_total_herbivory))+
   geom_point(aes(color= Species))+
@@ -311,7 +306,7 @@ ggplot(full_herbivory, aes(x = plot_age, y = Percent_total_herbivory))+
   ylab('Percent herbivory')+
   xlab('Plot age')
  
-ggplot(damage1, aes(x=plot_age, y=Percent_total_herbivory)) +
+ggplot(subset(damage1, Sample_period == 2 & Age_class == "Mature" & plot_age < 200), aes(x=plot_age, y=log10(Percent_total_herbivory))) +
   geom_point(aes(color=Species)) + 
   scale_color_manual(values = c("red",  "blue", "green")) +
   geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
@@ -322,7 +317,7 @@ ggplot(damage1, aes(x=plot_age, y=Percent_total_herbivory)) +
 microbial_lm <- lm(Percent_microbial ~ plot_age, data = damage1)
 summary(microbial_lm)
 
-ggplot(damage1, aes(x=plot_age, y=Percent_microbial)) +
+ggplot(subset(damage1, Sample_period == 2 & Age_class == "Mature"), aes(x=plot_age, y=log10(Percent_microbial))) +
   geom_point(aes(color=Species)) + 
   scale_color_manual(values = c("red",  "blue", "green")) +
   geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
