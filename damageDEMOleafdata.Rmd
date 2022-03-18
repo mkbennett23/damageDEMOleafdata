@@ -105,6 +105,22 @@ hist(damage1$Percent_total_herbivory)
 qqnorm(damage1$Percent_total_herbivory)
 ```
 
+
+overdispersion function
+```{r}
+overdisp_fun <- function(model) {
+     rdf <- df.residual(model)
+     rp <- residuals(model,type="pearson")
+     Pearson.chisq <- sum(rp^2)
+     prat <- Pearson.chisq/rdf
+     pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+     c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)}
+
+overdisp_fun(insectherbModel)
+
+```
+
+
 overdispersion thingy, doesn't work, need "OpenMP"
 ```{r}
 damage1$Percent_total_herbivory <- as.integer(as.numeric(damage1$Percent_total_herbivory))
