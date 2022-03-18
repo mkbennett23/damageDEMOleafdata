@@ -58,8 +58,8 @@ merge data
 ```{r}
 #merge dataframes
 damage2 <- damage %>%
-  merge(plots, by = "Plot") %>%
-  merge(treenum, by = "Tree_num")
+  merge(plots, by = "Plot")
+  #merge(treenum, by = "Tree_num")
 
 #filter for only sapling and mature
 damage1 <- damage2 %>%
@@ -109,7 +109,11 @@ overdispersion thingy, doesn't work, need "OpenMP"
 ```{r}
 damage1$Percent_total_herbivory <- as.integer(as.numeric(damage1$Percent_total_herbivory))
 
-insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~Species*Age_class*Sample_period+(1|plot_age_class/Plot/Age_class/Tree_num), data = damage1, family = genpois)
+insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Age_class/Tree_num), data = damage1, family = genpois)
+drop1(insectherbModeloverdisp, test = 'Chisq')
+Anova(insectherbModeloverdisp)
+emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
 ```
 
 graphs
