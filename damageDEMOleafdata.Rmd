@@ -1,0 +1,172 @@
+---
+title: "damageDEMOleafdata"
+author: "Shelley Bennett"
+date: "3/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load packages
+```{r}
+library(nlme)
+library(emmeans)
+library(performance)
+library(tidyverse)
+library(codyn)
+library(lme4)
+library(pscl)
+library(effects)
+library(glmmTMB)
+```
+
+
+Random stuff that I need
+```{r}
+#run this for sum of squares
+options(contrasts=c('contr.sum','contr.poly')) #run this first, important to make sure your sum of squares work right
+
+##function for making graphs with summary statistics
+barGraphStats <- function(data, variable, byFactorNames) {
+  count <- length(byFactorNames)
+  N <- aggregate(data[[variable]], data[byFactorNames], FUN=length)
+  names(N)[1:count] <- byFactorNames
+  names(N) <- sub("^x$", "N", names(N))
+  mean <- aggregate(data[[variable]], data[byFactorNames], FUN=mean)
+  names(mean)[1:count] <- byFactorNames
+  names(mean) <- sub("^x$", "mean", names(mean))
+  sd <- aggregate(data[[variable]], data[byFactorNames], FUN=sd)
+  names(sd)[1:count] <- byFactorNames
+  names(sd) <- sub("^x$", "sd", names(sd))
+  preSummaryStats <- merge(N, mean, by=byFactorNames)
+  finalSummaryStats <- merge(preSummaryStats, sd, by=byFactorNames)
+  finalSummaryStats$se <- finalSummaryStats$sd / sqrt(finalSummaryStats$N)
+  return(finalSummaryStats)
+}  
+```
+
+load data
+```{r}
+damage <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/damage_2021_combined.csv")
+plots <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/damagedemoplots.csv")
+treenum <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/treenum.csv")
+```
+
+merge data
+```{r}
+#merge dataframes
+damage2 <- damage %>%
+  merge(plots, by = "Plot") %>%
+  merge(treenum, by = "Tree_num")
+
+#filter for only sapling and mature
+damage1 <- damage2 %>%
+  filter(Age_class == "Sapling" | Age_class == "Mature")
+```
+
+stuff that is wrong or doesn't work
+```{r}
+#tried running an ANOVA without repeated measures
+summary(insectherbModel <- aov(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class)*as.factor(Sample_period), data=damage1))
+anova(insectherbModel)
+
+
+#this is the model we want but doesn't currently run
+summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class), data=damage1, random=~1|uniqueplant_num, correlation=corCompSymm(form=~1|uniqueplant_num), control=lmeControl(returnObject = T)))
+##this model doesn't work because we included plot age class in the fixed effects and there aren't all interactions in all plot age classes (i.e not all species at each plant age class in all plot age classes)
+
+##trying again with nesting
+summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class), data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Age_class/Tree_num), control=lmeControl(returnObject = T)))
+```
+
+
+######Total Percent Herbivory Model######
+```{r}
+damage1$Species <- as.factor(damage1$Species)
+damage1$Age_class <- as.factor(damage1$Age_class)
+damage1$Sample_period <- as.factor(damage1$Sample_period)
+
+summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Age_class/Tree_num), control=lmeControl(returnObject = T)))
+
+anova.lme(insectherbModel, type = 'sequential')
+emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+```
+
+looking at above model
+```{r}
+plot(allEffects(insectherbModel))
+```
+
+checking data
+```{r}
+hist(damage1$Percent_total_herbivory)
+qqnorm(damage1$Percent_total_herbivory)
+```
+
+overdispersion thingy, doesn't work, need "OpenMP"
+```{r}
+damage1$Percent_total_herbivory <- as.integer(as.numeric(damage1$Percent_total_herbivory))
+
+insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~Species*Age_class*Sample_period+(1|plot_age_class/Plot/Age_class/Tree_num), data = damage1, family = genpois)
+```
+
+graphs
+```{r}
+damage1$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
+damage2$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
+
+theme_set(theme_bw())
+theme_update(axis.title.x=element_text(size=24, vjust=-0.35), axis.text.x=element_text(size=20, color = "black"),
+             axis.title.y=element_text(size=24, angle=90, vjust=0.7), axis.text.y=element_text(size=20, color= "black"),
+             plot.title = element_text(size=24, vjust=2),
+             panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
+             legend.title=element_blank(), legend.text=element_text(size=18), panel.border=element_rect(color="black", fill = NA, size = 1))
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4"))+
+  ylab('Mean Percent Herbivore Damage\n')+
+  xlab(element_blank())+
+  expand_limits(y=4) +
+  annotate("text", x= 0.77, y = 3.5, label= "a", size = 6)+
+  annotate("text", x= 1.23, y = 3.7, label= "a", size = 6)+
+  annotate("text", x= 1.77, y = 2.7, label= "b", size = 6)+
+  annotate("text", x= 2.23, y = 2.2, label= "b", size = 6)+
+  annotate("text", x= 2.77, y = 3.4, label= "ab", size = 6)+
+  annotate("text", x= 3.23, y = 3.8, label= "a", size = 6)+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  expand_limits(y=9)
+```
+
+###herbivory with seedlings###
+```{r}
+summary(insectherbModelseed <- lme(Percent_total_herbivory~Species*Age_class, data=damage2, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Age_class/Tree_num), control=lmeControl(returnObject = T)))
+
+anova.lme(insectherbModelseed, type = 'sequential')
+emmeans(insectherbModelseed, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+```
+
+
+graphing with seedlings
+```{r}
+ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "darkolivegreen"))+
+  ylab('Mean Percent Herbivore Damage\n')+
+  xlab(element_blank())+
+  expand_limits(y=4) +
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  expand_limits(y=9)
+```
+
+
+
+
