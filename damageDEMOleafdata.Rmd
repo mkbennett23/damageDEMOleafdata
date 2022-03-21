@@ -78,7 +78,7 @@ summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.fac
 ##this model doesn't work because we included plot age class in the fixed effects and there aren't all interactions in all plot age classes (i.e not all species at each plant age class in all plot age classes)
 
 ##trying again with nesting
-summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class), data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Age_class/Tree_num), control=lmeControl(returnObject = T)))
+summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.factor(Age_class)*as.factor(plot_age_class), data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
 ```
 
 
@@ -88,7 +88,7 @@ damage1$Species <- as.factor(damage1$Species)
 damage1$Age_class <- as.factor(damage1$Age_class)
 damage1$Sample_period <- as.factor(damage1$Sample_period)
 
-summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Age_class/Tree_num), control=lmeControl(returnObject = T)))
+summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
 
 anova.lme(insectherbModel, type = 'sequential')
 emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
@@ -125,7 +125,7 @@ overdispersion thingy, doesn't work, need "OpenMP"
 ```{r}
 damage1$Percent_total_herbivory <- as.integer(as.numeric(damage1$Percent_total_herbivory))
 
-insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Age_class/Tree_num), data = damage1, family = genpois)
+insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
 drop1(insectherbModeloverdisp, test = 'Chisq')
 Anova(insectherbModeloverdisp)
 emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
