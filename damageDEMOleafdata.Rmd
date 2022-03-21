@@ -20,6 +20,9 @@ library(lme4)
 library(pscl)
 library(effects)
 library(glmmTMB)
+library(car) #Anova test for mixed models, for this code of the genpois model form glmmTMB
+library(DHARMa)
+
 ```
 
 
@@ -52,6 +55,14 @@ load data
 damage <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/damage_2021_combined.csv")
 plots <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/damagedemoplots.csv")
 treenum <- read.csv("~/Dropbox (Smithsonian)/SERC_damageDemo/treenum.csv")
+```
+Amy load data
+```{r}
+
+setwd("C:/Users/hrusk/Dropbox (Smithsonian)/SERC_damageDEMO")
+damage <- read.csv("damage_2021_combined2.csv")
+plots <- read.csv("damagedemoplots2.csv")
+
 ```
 
 merge data
@@ -88,7 +99,7 @@ damage1$Species <- as.factor(damage1$Species)
 damage1$Age_class <- as.factor(damage1$Age_class)
 damage1$Sample_period <- as.factor(damage1$Sample_period)
 
-summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Age_class/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
+summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
 
 anova.lme(insectherbModel, type = 'sequential')
 emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
@@ -121,16 +132,76 @@ overdisp_fun(insectherbModel)
 ```
 
 
-overdispersion thingy, doesn't work, need "OpenMP"
+model to account for overdispersion/non-nomral distribution
+doesn't work for Shelley, need "OpenMP"
 ```{r}
 damage1$Percent_total_herbivory <- as.integer(as.numeric(damage1$Percent_total_herbivory))
 
 insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
-drop1(insectherbModeloverdisp, test = 'Chisq')
-Anova(insectherbModeloverdisp)
+
+##model checking##
+model_check <- simulateResiduals(insectherbModeloverdisp)
+plot(model_check)
+
+#Amy also ran...#
+testZeroInflation(insectherbModeloverdisp) #not significant, good
+testUniformity(insectherbModeloverdisp) #not significant, good
+testOutliers(insectherbModeloverdisp) #not significant, good
+
+drop1(insectherbModeloverdisp, test = 'Chisq') #preferred way to test model, but doesn't look at main effects
+
+#Model output:
+#Percent_total_herbivory ~ Species * Age_class * Sample_period + 
+#    (1 | plot_age_class/Plot/Tree_num)
+#                                Df   AIC    LRT Pr(>Chi)   
+#<none>                             19926                   
+#Species:Age_class:Sample_period  2 19933 10.522 0.005191 **
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Anova(insectherbModeloverdisp) #Wald's test not prefferred for model type, but gives main effects
+
+#Analysis of Deviance Table (Type II Wald chisquare tests)
+
+#Response: Percent_total_herbivory
+#                                   Chisq Df Pr(>Chisq)    
+#Species                         102.6882  2  < 2.2e-16 ***
+#Age_class                         0.3208  1    0.57111    
+#Sample_period                    28.4578  1  9.576e-08 ***
+#Species:Age_class                 5.6101  2    0.06050 .  
+#Species:Sample_period            63.7586  2  1.429e-14 ***
+#Age_class:Sample_period           1.9274  1    0.16504    
+#Species:Age_class:Sample_period   9.0769  2    0.01069 *  
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
 emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 
 ```
+
+
+
+non-normal model with seedling data and without sample period
+```{r}
+
+damage2$Percent_total_herbivory <- as.integer(as.numeric(damage2$Percent_total_herbivory))
+
+insectherbModeloverdisp2 <-glmmTMB(Percent_total_herbivory~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
+
+##model checking##
+model_check2 <- simulateResiduals(insectherbModeloverdisp2)
+plot(model_check2) #within-group deviations from uniformity significant, 
+#Levene Test for homogeneity of variance signficant
+
+testZeroInflation(insectherbModeloverdisp2) #not significant, good
+testUniformity(insectherbModeloverdisp2) #not significant, good
+testOutliers(insectherbModeloverdisp2) #not significant, good
+
+```
+
+
+
 
 graphs
 ```{r}
