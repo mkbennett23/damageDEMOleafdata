@@ -75,6 +75,15 @@ damage2 <- damage %>%
 #filter for only sapling and mature
 damage1 <- damage2 %>%
   filter(Age_class == "Sapling" | Age_class == "Mature")
+
+damage1$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
+damage2$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
+
+damageMature <- damage1 %>%
+  filter(Age_class == "Mature")
+
+damageSapling <- damage1 %>%
+  filter(Age_class == "Sapling")
 ```
 
 stuff that is wrong or doesn't work
@@ -205,8 +214,7 @@ testOutliers(insectherbModeloverdisp2) #not significant, good
 
 graphs
 ```{r}
-damage1$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
-damage2$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
+
 
 theme_set(theme_bw())
 theme_update(axis.title.x=element_text(size=24, vjust=-0.35), axis.text.x=element_text(size=20, color = "black"),
@@ -258,6 +266,349 @@ ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFa
   expand_limits(y=9)
 ```
 
+#####Microbial model#########
+
+```{r}
+summary(microbialModel <-lme(Percent_microbial~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), data=damage1, random=~1|plot_age_class/Plot, correlation=corCompSymm(form=~1|plot_age_class/Plot/plant_num), control=lmeControl(returnObject = T)))
+
+anova.lme(microbialModel, type = 'sequential')
+emmeans(microbialModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+```
+
+```{r}
+
+ggplot(data=barGraphStats(data=damage1, variable="Percent_microbial", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme_bw()+
+  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4"))+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab(element_blank())+
+  annotate("text", x= 0.77, y = 2.7, label= "c", size = 6)+
+  annotate("text", x= 1.23, y = 2.8, label= "c", size = 6)+
+  annotate("text", x= 1.77, y = 7.9, label= "b", size = 6)+
+  annotate("text", x= 2.23, y = 9.3, label= "a", size = 6)+
+  annotate("text", x= 2.77, y = 9.5, label= "ab", size = 6)+
+  annotate("text", x= 3.23, y = 8.7, label= "b", size = 6)+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  expand_limits(y=9)
+
+```
+
+graph with seedlings
+```{r}
+ggplot(data=barGraphStats(data=damage2, variable="Percent_microbial", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme_bw()+
+  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "darkolivegreen"))+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab(element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  expand_limits(y=9)
+```
+
+######Regressions###
 
 
+practice regression graphs
+```{r}
+herbivory_lm <- lm(Percent_total_herbivory ~ plot_age*Species*Age_class*Sample_period, data = damage1)
+summary(herbivory_lm)
+#Age_class, sampling period
+
+predictedherbivory <- predict(herbivory_lm, interval = "confidence", level = 0.95) 
+
+full_herbivory <- data.frame(damage1, predictedherbivory)
+
+
+ggplot(full_herbivory, aes(x = plot_age, y = Percent_total_herbivory))+
+  geom_point(aes(color= Species))+
+  geom_line(aes(x = plot_age, y = fit)) +
+  geom_ribbon(aes(x = plot_age, ymin = lwr, ymax = upr), alpha = 0.3) +
+  #annotate("text", x = 14, y = 290, label = "y = -7.35x + 161.33")+
+  #annotate("text", x = 14, y = 270, label = "italic(R) ^ 2 == 0.14", parse = TRUE)+
+  ylab('Percent herbivory')+
+  xlab('Plot age')
+ 
+ggplot(subset(damage1, Sample_period == 2 & Age_class == "Mature" & plot_age < 200), aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("#D39200",  "#93AA00", "#00B9E3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+  
+
+
+
+number_ticks <- function(n) {function(limits) pretty(limits, n)}
+sp.labs <- c("Jul", "Oct")
+names(sp.labs) <- c("1", "2")
+
+# Create the plot
+#p + facet_grid(
+  #dose ~ supp, 
+ # labeller = labeller(dose = dose.labs, supp = supp.labs))
+
+ggplot(damage1, aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  scale_x_continuous(breaks=number_ticks(4)) +
+  facet_grid(rows = vars(Age_class), cols = vars(Sample_period), labeller = labeller(Sample_period = sp.labs))+
+  theme(strip.text.x = element_text(size = 14, color = "black"), strip.text.y = element_text(size = 14, color = "black"))+
+  ylab("log10(Percent Herbivore Damage)")+
+  xlab("Plot Age")+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
+
+ggplot(damage1, aes(x=plot_age, y=log10(Percent_microbial))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  scale_x_continuous(breaks=number_ticks(4)) +
+  facet_grid(rows = vars(Age_class), cols = vars(Sample_period), labeller = labeller(Sample_period = sp.labs))+
+  theme(strip.text.x = element_text(size = 14, color = "black"), strip.text.y = element_text(size = 14, color = "black"))+
+  ylab("log10(Percent Microbial Damage)")+
+  xlab("Plot Age")+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
+
+
+
+#mature, sample period 1
+ggplot(subset(damage1, Sample_period == 1 & Age_class == "Mature"), aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=0.5, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+#mature sample period 2
+ggplot(subset(damage1, Sample_period == 2 & Age_class == "Mature"), aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=0.5, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+#sapling sample period 1
+ggplot(subset(damage1, Sample_period == 1 & Age_class == "Sapling"), aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+#sapling sample period 2
+ggplot(subset(damage1, Sample_period == 2 & Age_class == "Sapling"), aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+```
+
+
+####facet regression graphs####
+
+```{r}
+number_ticks <- function(n) {function(limits) pretty(limits, n)}
+sp.labs <- c("Jul", "Oct")
+names(sp.labs) <- c("1", "2")
+
+# Create the plot
+#p + facet_grid(
+  #dose ~ supp, 
+ # labeller = labeller(dose = dose.labs, supp = supp.labs))
+
+ggplot(damage1, aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  scale_x_continuous(breaks=number_ticks(4)) +
+  facet_grid(rows = vars(Age_class), cols = vars(Sample_period), labeller = labeller(Sample_period = sp.labs))+
+  theme(strip.text.x = element_text(size = 14, color = "black"), strip.text.y = element_text(size = 14, color = "black"))+
+  ylab("log10(Percent Herbivore Damage)")+
+  xlab("Plot Age")+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
+
+ggplot(damage1, aes(x=plot_age, y=log10(Percent_microbial))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  scale_x_continuous(breaks=number_ticks(4)) +
+  facet_grid(rows = vars(Age_class), cols = vars(Sample_period), labeller = labeller(Sample_period = sp.labs))+
+  theme(strip.text.x = element_text(size = 14, color = "black"), strip.text.y = element_text(size = 14, color = "black"))+
+  ylab("log10(Percent Microbial Damage)")+
+  xlab("Plot Age")+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
+
+
+
+
+
+ggplot(damage2, aes(x=plot_age, y=log10(Percent_total_herbivory))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  scale_x_continuous(breaks=number_ticks(4)) +
+  facet_grid(rows = vars(Age_class), cols = vars(Sample_period), labeller = labeller(Sample_period = sp.labs))+
+  theme(strip.text.x = element_text(size = 14, color = "black"), strip.text.y = element_text(size = 14, color = "black"))+
+  ylab("log10(Percent Herbivore Damage)")+
+  xlab("Plot Age")+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
+
+ggplot(damage2, aes(x=plot_age, y=log10(Percent_microbial))) +
+  geom_point(aes(color=Species)) + 
+  scale_color_manual(values = c("yellow3",  "chartreuse4", "darkorchid3")) +
+  geom_smooth(aes(color=Species, fill=Species), size=1, method=lm) +
+  scale_x_continuous(breaks=number_ticks(4)) +
+  facet_grid(rows = vars(Age_class), cols = vars(Sample_period), labeller = labeller(Sample_period = sp.labs))+
+  theme(strip.text.x = element_text(size = 14, color = "black"), strip.text.y = element_text(size = 14, color = "black"))+
+  ylab("log10(Percent Microbial Damage)")+
+  xlab("Plot Age")+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
+
+```
+
+
+####stacked bar charts#####
+
+```{r}
+herbivorywide <- damage1 %>%
+  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class)
+
+herbivorylong <- gather(herbivorywide, Herbivory_type, Percent_damage, Percent_chewed:Percent_gall, factor_key=TRUE)
+herbivorylong
+
+herbivorylong$Sample_period <- as.factor(herbivorylong$Sample_period)
+
+ggplot(data=barGraphStats(data=herbivorylong, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  facet_wrap(~Species)+
+  ylab('Mean Percent Damage')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())
+  #facet_grid(rows = vars(Age_class), cols = vars(Species))
+
+herbivorylongMature <- herbivorylong %>%
+  filter(Age_class == "Mature")
+
+ggplot(data=barGraphStats(data=herbivorylongMature, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  scale_fill_discrete(labels = c("Chewing", "Mining", "Skeletonizing", "Galls"))+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Herivore Damage on Mature Trees\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))
+
+herbivorylongSapling <- herbivorylong %>%
+  filter(Age_class == "Sapling")
+
+ggplot(data=barGraphStats(data=herbivorylongSapling, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity", width = 1)+
+  scale_fill_discrete(labels = c("Chewing", "Mining", "Skeletonizing", "Galls"))+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Herbivore Damage on Saplings\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))
+
+damage1$Sample_period <- as.factor(damage1$Sample_period)
+
+ggplot(data=barGraphStats(data=damage1, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity")+
+  facet_wrap(~Species)+
+  ylab('Mean Percent Microbial Damage')+
+  xlab('Sample Period')
+
+
+ggplot(data=barGraphStats(data=damageMature, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity",  fill="chocolate2")+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Microbial Damage on Mature Trees\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))+
+  expand_limits(y=15)
+
+ggplot(data=barGraphStats(data=damageSapling, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity", fill="chocolate2")+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))+
+  expand_limits(y=15)
+
+```
+
+
+stacked graphs for seedlings
+```{r}
+
+herbivorywideSeedlings <- damage2 %>%
+  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class)
+
+herbivorylongSeedlings <- gather(herbivorywideSeedlings, Herbivory_type, Percent_damage, Percent_chewed:Percent_gall, factor_key=TRUE)
+herbivorylong
+
+herbivorylongSeedlings$Sample_period <- as.factor(herbivorylongSeedlings$Sample_period)
+
+herbivorylongSeedlingsSeed <- herbivorylongSeedlings%>%
+  filter(Age_class == "Seedling")
+
+ggplot(data=barGraphStats(data=herbivorylongSeedlingsSeed, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  scale_fill_discrete(labels = c("Chewing", "Mining", "Skeletonizing", "Galls"))+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Herivore Damage\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))
+```
+
+######original code from Kim####
+```{r}
+##code from Kim below
+#below is the model
+summary(insectherbModel <- lme(avg_perc_herbivory~as.factor(species)*as.factor(ind_age)*as.factor(stand_age), #typical model with percent herbivory as a dependent variable and species, individual age, and stand age as explanatory variables
+                               data=herbivoryData, #the dataframe the model is being run on
+                               random=~1|plot, #random statement for which plot the plant came from
+                               correlation=corCompSymm(form=~date|plot/plant), #compound symmetry correlation structure (good for herbivory, which isn't necessarily increasing through time), saying that plants are nested within plots, which were sampled multiple dates
+                               control=lmeControl(returnObject=T))) #I forget what this does, but I think it is important to keep
+
+#this checks that the model ran ok (checks assumptions, might not work exactly right on this model though)
+check_model(insectherbModel)
+
+#this gives you your p-values
+anova.lme(insectherbModel, type='sequential') 
+
+
+#this gives you the mean and standard errors for each treatment
+emmeans(insectherbModel, pairwise~as.factor(stand_age), adjust="tukey")
+
+
+
+
+#same model with a sqrt transformation to make the data normal
+summary(insectherbModel <- lme(sqrt(avg_perc_herbivory)~as.factor(species)*as.factor(ind_age)*as.factor(stand_age), #note how avg_perc_herbivory is square root transformed in this one
+                               data=herbivoryData, 
+                               random=~1|plot, 
+                               correlation=corCompSymm(form=~date|plot/plant),
+                               control=lmeControl(returnObject=T)))
+check_model(insectherbModel)
+anova.lme(insectherbModel, type='sequential') 
+back.emmeans(emmeans(insectherbModel, pairwise~as.factor(stand_age), adjust="tukey"), transform='sqrt') #back.emmeans will backtransform the values for you 
+```
 
