@@ -67,6 +67,12 @@ damage1 <- damage2 %>%
 
 damage1$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
 damage2$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
+
+damageMature <- damage1 %>%
+  filter(Age_class == "Mature")
+
+damageSapling <- damage1 %>%
+  filter(Age_class == "Sapling")
 ```
 
 stuff that is wrong or doesn't work
@@ -394,6 +400,111 @@ ggplot(damage2, aes(x=plot_age, y=log10(Percent_microbial))) +
 ```
 
 
+####stacked bar charts#####
 
+```{r}
+herbivorywide <- damage1 %>%
+  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class)
+
+herbivorylong <- gather(herbivorywide, Herbivory_type, Percent_damage, Percent_chewed:Percent_gall, factor_key=TRUE)
+herbivorylong
+
+herbivorylong$Sample_period <- as.factor(herbivorylong$Sample_period)
+
+ggplot(data=barGraphStats(data=herbivorylong, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  facet_wrap(~Species)+
+  ylab('Mean Percent Damage')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())
+  #facet_grid(rows = vars(Age_class), cols = vars(Species))
+
+herbivorylongMature <- herbivorylong %>%
+  filter(Age_class == "Mature")
+
+ggplot(data=barGraphStats(data=herbivorylongMature, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  scale_fill_discrete(labels = c("Chewing", "Mining", "Skeletonizing", "Galls"))+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Herivore Damage on Mature Trees\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))
+
+herbivorylongSapling <- herbivorylong %>%
+  filter(Age_class == "Sapling")
+
+ggplot(data=barGraphStats(data=herbivorylongSapling, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity", width = 1)+
+  scale_fill_discrete(labels = c("Chewing", "Mining", "Skeletonizing", "Galls"))+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Herbivore Damage on Saplings\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))
+
+damage1$Sample_period <- as.factor(damage1$Sample_period)
+
+ggplot(data=barGraphStats(data=damage1, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity")+
+  facet_wrap(~Species)+
+  ylab('Mean Percent Microbial Damage')+
+  xlab('Sample Period')
+
+
+ggplot(data=barGraphStats(data=damageMature, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity",  fill="chocolate2")+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Microbial Damage on Mature Trees\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))+
+  expand_limits(y=15)
+
+ggplot(data=barGraphStats(data=damageSapling, variable = "Percent_microbial", byFactorNames=c("Species", "Sample_period")), aes(x=Sample_period, y=mean))+
+  geom_bar(position="dodge", stat="identity", fill="chocolate2")+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Microbial Damage\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))+
+  expand_limits(y=15)
+
+```
+
+
+stacked graphs for seedlings
+```{r}
+
+herbivorywideSeedlings <- damage2 %>%
+  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class)
+
+herbivorylongSeedlings <- gather(herbivorywideSeedlings, Herbivory_type, Percent_damage, Percent_chewed:Percent_gall, factor_key=TRUE)
+herbivorylong
+
+herbivorylongSeedlings$Sample_period <- as.factor(herbivorylongSeedlings$Sample_period)
+
+herbivorylongSeedlingsSeed <- herbivorylongSeedlings%>%
+  filter(Age_class == "Seedling")
+
+ggplot(data=barGraphStats(data=herbivorylongSeedlingsSeed, variable="Percent_damage", byFactorNames=c("Species", "Sample_period", "Herbivory_type")), aes(x=Sample_period, y=mean, fill=Herbivory_type))+
+  geom_bar(position="stack", stat="identity")+
+  scale_fill_discrete(labels = c("Chewing", "Mining", "Skeletonizing", "Galls"))+
+  facet_wrap(~Species)+
+  theme(strip.text.x = element_text(size = 14, color = "black"))+
+  ylab('Mean Percent Herivore Damage\n')+
+  xlab('Sample Period')+
+  theme(legend.title=element_blank())+
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  scale_x_discrete(labels = c("Jul", "Oct"))
+```
 
 
