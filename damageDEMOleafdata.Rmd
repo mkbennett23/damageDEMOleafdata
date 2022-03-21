@@ -207,8 +207,113 @@ testZeroInflation(insectherbModeloverdisp2) #not significant, good
 testUniformity(insectherbModeloverdisp2) #not significant, good
 testOutliers(insectherbModeloverdisp2) #not significant, good
 
+drop1(insectherbModeloverdisp2, test = 'Chisq')
+#Model:
+#Percent_total_herbivory ~ Species * Age_class + (1 | plot_age_class/Plot/Tree_num)
+#                  Df   AIC    LRT  Pr(>Chi)    
+#<none>               20854                     
+#Species:Age_class  4 20866 20.342 0.0004274 ***
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Anova(insectherbModeloverdisp2)
+
+#Analysis of Deviance Table (Type II Wald chisquare tests)
+
+#Response: Percent_total_herbivory
+#                    Chisq Df Pr(>Chisq)    
+#Species            87.067  2  < 2.2e-16 ***
+#Age_class         150.575  2  < 2.2e-16 ***
+#Species:Age_class  16.278  4   0.002668 ** 
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+emmeans(insectherbModeloverdisp2, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 ```
 
+microbial models for saplings and mature
+```{r}
+damage1$Percent_microbial <- as.integer(as.numeric(damage1$Percent_microbial))
+
+insectherbModeloverdisp3 <-glmmTMB(Percent_microbial~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
+
+##model checking##
+model_check3 <- simulateResiduals(insectherbModeloverdisp3)
+plot(model_check3) #KS test = deviation significant, might not be of concern? this is better than poisson distribution
+
+#Amy also ran...#
+testZeroInflation(insectherbModeloverdisp3) #not significant, good
+testUniformity(insectherbModeloverdisp3) #significant deviation
+testOutliers(insectherbModeloverdisp3) #not significant, good
+
+drop1(insectherbModeloverdisp3, test = 'Chisq')
+#Model:
+#Percent_microbial ~ Species * Age_class * Sample_period + (1 | 
+#    plot_age_class/Plot/Tree_num)
+#                                Df   AIC    LRT  Pr(>Chi)    
+#<none>                             26498                     
+#Species:Age_class:Sample_period  2 26526 31.942 1.158e-07 ***
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Anova(insectherbModeloverdisp3)
+#Analysis of Deviance Table (Type II Wald chisquare tests)
+
+#Response: Percent_microbial
+#                                    Chisq Df Pr(>Chisq)    
+#Species                          216.6381  2  < 2.2e-16 ***
+#Age_class                          1.0601  1    0.30320    
+#Sample_period                   1765.5411  1  < 2.2e-16 ***
+#Species:Age_class                  0.9832  2    0.61164    
+#Species:Sample_period            192.9121  2  < 2.2e-16 ***
+#Age_class:Sample_period            5.8862  1    0.01526 *  
+#Species:Age_class:Sample_period   31.6474  2  1.342e-07 ***
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+emmeans(insectherbModeloverdisp3, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+```
+
+microbial models for seedlings without sampling period
+```{r}
+damage2$Percent_microbial <- as.integer(as.numeric(damage2$Percent_microbial))
+
+insectherbModeloverdisp4 <-glmmTMB(Percent_microbial~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
+
+##model checking##
+model_check4 <- simulateResiduals(insectherbModeloverdisp4)
+plot(model_check4) #KS test: significant deviation
+#within-group deviations from uniformity significant, 
+#Levene Test for homogeneity of variance significant
+
+testZeroInflation(insectherbModeloverdisp4) #not significant, good
+testUniformity(insectherbModeloverdisp4) #significant deviation
+testOutliers(insectherbModeloverdisp4) #not signfificant, good
+
+drop1(insectherbModeloverdisp4, test = 'Chisq')
+#Model:
+#Percent_microbial ~ Species * Age_class + (1 | plot_age_class/Plot/Tree_num)
+#                  Df   AIC    LRT  Pr(>Chi)    
+#<none>               30659                     
+#Species:Age_class  4 30732 81.004 < 2.2e-16 ***
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Anova(insectherbModeloverdisp4)
+
+#Analysis of Deviance Table (Type II Wald chisquare tests)
+
+#Response: Percent_microbial
+#                    Chisq Df Pr(>Chisq)    
+#Species           191.951  2  < 2.2e-16 ***
+#Age_class         194.177  2  < 2.2e-16 ***
+#Species:Age_class  88.239  4  < 2.2e-16 ***
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+emmeans(insectherbModeloverdisp4, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+```
 
 
 
