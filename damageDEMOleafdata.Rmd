@@ -26,6 +26,11 @@ library(DHARMa)
 ```
 
 
+```{r}
+setwd("~/Dropbox (Smithsonian)/SERC_damageDEMO") #shelley
+```
+
+
 Random stuff that I need
 ```{r}
 #run this for sum of squares
@@ -68,21 +73,14 @@ plots <- read.csv("damagedemoplots2.csv")
 merge data
 ```{r}
 #merge dataframes
-damage2 <- damage %>%
+damagePlots <- damage %>%
   merge(plots, by = "Plot")
   #merge(treenum, by = "Tree_num")
 
-#filter for only sapling and mature
-damage1 <- damage2 %>%
-  filter(Age_class == "Sapling" | Age_class == "Mature")
-
-damage1$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
-damage2$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
-
-damageMature <- damage1 %>%
+damageMature <- damagePlots %>%
   filter(Age_class == "Mature")
 
-damageSapling <- damage1 %>%
+damageSapling <- damagePlots %>%
   filter(Age_class == "Sapling")
 ```
 
@@ -103,15 +101,34 @@ summary(insectherbModel <- lme(Percent_total_herbivory~as.factor(Species)*as.fac
 
 
 ######Total Percent Herbivory Model######
+
+Model 1: Sample period 1 (July), all life stages; using damageJuly
+Model 2: Sample period 2(Oct), just sapling and mature; using damageOct
+**no sample period as variable in models anymore**
+
+getting data into correct form, making data frames for each model
 ```{r}
-damage1$Species <- as.factor(damage1$Species)
-damage1$Age_class <- as.factor(damage1$Age_class)
-damage1$Sample_period <- as.factor(damage1$Sample_period)
+damagePlots$Species <- as.factor(damagePlots$Species)
+damagePlots$Age_class <- as.factor(damagePlots$Age_class)
+damagePlots$Sample_period <- as.factor(damagePlots$Sample_period)
+damagePlots$Percent_total_herbivory <- as.integer(as.numeric(damagePlots$Percent_total_herbivory))
 
-summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
+#filter for all life stages at sample period 1
+damageJuly <- damagePlots %>%
+  filter(Sample_period == 1)
 
-anova.lme(insectherbModel, type = 'sequential')
-emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+#filter for only sapling and mature, sample period 2
+damageOct <- damagePlots %>%
+  filter(Age_class == "Sapling" | Age_class == "Mature")%>%
+  filter(Sample_period == 2)
+
+damageOct$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
+damageJuly$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
+
+#summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
+
+#anova.lme(insectherbModel, type = 'sequential')
+#emmeans(insectherbModel, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 ```
 
 looking at above model
@@ -121,16 +138,16 @@ plot(allEffects(insectherbModel))
 
 checking data
 ```{r}
-hist(damage1$Percent_total_herbivory)
-qqnorm(damage1$Percent_total_herbivory)
+hist(damagePlots$Percent_total_herbivory)
+qqnorm(damagePlots$Percent_total_herbivory)
 ```
 
 
 overdispersion function
 ```{r}
-overdisp_fun <- function(model) {
-     rdf <- df.residual(model)
-     rp <- residuals(model,type="pearson")
+overdisp_fun <- function(insectherbModel) {
+     rdf <- df.residual(insectherbModel)
+     rp <- residuals(insectherbModel,type="pearson")
      Pearson.chisq <- sum(rp^2)
      prat <- Pearson.chisq/rdf
      pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
@@ -143,10 +160,13 @@ overdisp_fun(insectherbModel)
 
 model to account for overdispersion/non-nomral distribution
 doesn't work for Shelley, need "OpenMP"
-```{r}
-damage1$Percent_total_herbivory <- as.integer(as.numeric(damage1$Percent_total_herbivory))
 
-insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
+**Model 2** -- Amy please rerun with new code using damagedOct instead of damage1
+```{r}
+
+#insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
+
+insectherbModeloverdisp <-glmmTMB(Percent_total_herbivory~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damageOct, family = genpois)
 
 ##model checking##
 model_check <- simulateResiduals(insectherbModeloverdisp)
@@ -192,11 +212,14 @@ emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class
 
 
 non-normal model with seedling data and without sample period
+**Model 1** -- Amy please rerun using damageJuly instead of damage2
 ```{r}
 
-damage2$Percent_total_herbivory <- as.integer(as.numeric(damage2$Percent_total_herbivory))
+damageJuly$Percent_total_herbivory <- as.integer(as.numeric(damage2$Percent_total_herbivory))
 
-insectherbModeloverdisp2 <-glmmTMB(Percent_total_herbivory~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
+#insectherbModeloverdisp2 <-glmmTMB(Percent_total_herbivory~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
+
+insectherbModeloverdisp2 <-glmmTMB(Percent_total_herbivory~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damageJuly, family = genpois)
 
 ##model checking##
 model_check2 <- simulateResiduals(insectherbModeloverdisp2)
@@ -231,11 +254,14 @@ Anova(insectherbModeloverdisp2)
 emmeans(insectherbModeloverdisp2, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 ```
 
-microbial models for saplings and mature
+###Microbial models###
+**Model 2** -- Amy, please rerun using damageOct instead of damage1
 ```{r}
-damage1$Percent_microbial <- as.integer(as.numeric(damage1$Percent_microbial))
+damageOct$Percent_microbial <- as.integer(as.numeric(damageOct$Percent_microbial))
 
-insectherbModeloverdisp3 <-glmmTMB(Percent_microbial~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
+#insectherbModeloverdisp3 <-glmmTMB(Percent_microbial~ Species*Age_class*Sample_period+(1|plot_age_class/Plot/Tree_num), data = damage1, family = genpois)
+
+insectherbModeloverdisp3 <-glmmTMB(Percent_microbial~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damageOct, family = genpois)
 
 ##model checking##
 model_check3 <- simulateResiduals(insectherbModeloverdisp3)
@@ -276,10 +302,13 @@ emmeans(insectherbModeloverdisp3, pairwise~as.factor(Species)*as.factor(Age_clas
 ```
 
 microbial models for seedlings without sampling period
+**Model 1** -- Amy please rerun using damageJuly instead of damage2
 ```{r}
-damage2$Percent_microbial <- as.integer(as.numeric(damage2$Percent_microbial))
+damageJuly$Percent_microbial <- as.integer(as.numeric(damageJuly$Percent_microbial))
 
-insectherbModeloverdisp4 <-glmmTMB(Percent_microbial~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
+#insectherbModeloverdisp4 <-glmmTMB(Percent_microbial~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
+
+insectherbModeloverdisp4 <-glmmTMB(Percent_microbial~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damageJuly, family = genpois)
 
 ##model checking##
 model_check4 <- simulateResiduals(insectherbModeloverdisp4)
@@ -369,6 +398,20 @@ ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFa
   expand_limits(y=4) +
   theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
   expand_limits(y=9)
+
+ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  theme(legend.title=element_blank())+
+  theme_bw()+
+  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "darkolivegreen"))+
+  ylab('Mean Percent Herbivore Damage\n')+
+  xlab(element_blank())+
+  expand_limits(y=4) +
+  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  expand_limits(y=9)+
+  facet_wrap(~Sample_period)
+
 ```
 
 #####Microbial model#########
@@ -515,6 +558,9 @@ ggplot(subset(damage1, Sample_period == 2 & Age_class == "Sapling"), aes(x=plot_
 
 ####facet regression graphs####
 
+
+
+
 ```{r}
 number_ticks <- function(n) {function(limits) pretty(limits, n)}
 sp.labs <- c("Jul", "Oct")
@@ -574,7 +620,7 @@ ggplot(damage2, aes(x=plot_age, y=log10(Percent_microbial))) +
   theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), axis.title.x=element_text(size=18), panel.grid.major=element_blank(), panel.grid.minor=element_blank())
 
 ```
-
+###add .001 to all values,using mutate new column 
 
 ####stacked bar charts#####
 
