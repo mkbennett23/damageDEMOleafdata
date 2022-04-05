@@ -122,8 +122,8 @@ damageOct <- damagePlots %>%
   filter(Age_class == "Sapling" | Age_class == "Mature")%>%
   filter(Sample_period == 2)
 
-damageOct$Age_class <- factor(damage1$Age_class, levels = c("Sapling", "Mature"))
-damageJuly$Age_class <- factor(damage2$Age_class, levels = c("Seedling", "Sapling", "Mature"))
+damageOct$Age_class <- factor(damageOct$Age_class, levels = c("Sapling", "Mature"))
+damageJuly$Age_class <- factor(damageJuly$Age_class, levels = c("Seedling", "Sapling", "Mature"))
 
 #summary(insectherbModel <- lme(Percent_total_herbivory~Species*Age_class*Sample_period, data=damage1, random=~1|plot_age_class/Plot/Tree_num, correlation=corCompSymm(form=~1|plot_age_class/Plot/Tree_num), control=lmeControl(returnObject = T)))
 
@@ -180,11 +180,13 @@ testOutliers(insectherbModeloverdisp) #not significant, good
 drop1(insectherbModeloverdisp, test = 'Chisq') #preferred way to test model, but doesn't look at main effects
 
 #Model output:
-#Percent_total_herbivory ~ Species * Age_class * Sample_period + 
-#    (1 | plot_age_class/Plot/Tree_num)
-#                                Df   AIC    LRT Pr(>Chi)   
-#<none>                             19926                   
-#Species:Age_class:Sample_period  2 19933 10.522 0.005191 **
+#Single term deletions
+
+#Model:
+#Percent_total_herbivory ~ Species * Age_class + (1 | plot_age_class/Plot/Tree_num)
+#                  Df   AIC   LRT Pr(>Chi)  
+#<none>               10617                 
+#Species:Age_class  2 10618 4.654  0.09759 .
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -193,29 +195,206 @@ Anova(insectherbModeloverdisp) #Wald's test not prefferred for model type, but g
 #Analysis of Deviance Table (Type II Wald chisquare tests)
 
 #Response: Percent_total_herbivory
-#                                   Chisq Df Pr(>Chisq)    
-#Species                         102.6882  2  < 2.2e-16 ***
-#Age_class                         0.3208  1    0.57111    
-#Sample_period                    28.4578  1  9.576e-08 ***
-#Species:Age_class                 5.6101  2    0.06050 .  
-#Species:Sample_period            63.7586  2  1.429e-14 ***
-#Age_class:Sample_period           1.9274  1    0.16504    
-#Species:Age_class:Sample_period   9.0769  2    0.01069 *  
+                    Chisq Df Pr(>Chisq)    
+#Species           80.2641  2    < 2e-16 ***
+#Age_class          0.7174  1    0.39701    
+#Species:Age_class  4.6923  2    0.09574 .  
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 
+
 emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+
+
 
 ```
 
+
+
+Show in New Window
+Linear mixed-effects model fit by REML
+  Data: damage1 
+
+Random effects:
+ Formula: ~1 | plot_age_class
+        (Intercept)
+StdDev:   0.2584916
+
+ Formula: ~1 | Plot %in% plot_age_class
+        (Intercept)
+StdDev:   0.6156307
+
+ Formula: ~1 | Tree_num %in% Plot %in% plot_age_class
+        (Intercept) Residual
+StdDev:    1.205405 5.527392
+
+Correlation Structure: Compound symmetry
+ Formula: ~1 | plot_age_class/Plot/Tree_num 
+ Parameter estimate(s):
+          Rho 
+-4.180851e-05 
+Fixed effects:  Percent_total_herbivory ~ Species * Age_class * Sample_period 
+ Correlation: 
+                                  (Intr) Specs1 Specs2 Ag_cl1
+Species1                          -0.600                     
+Species2                          -0.621  0.368              
+Age_class1                         0.694 -0.661 -0.614       
+Sample_period                     -0.837  0.588  0.602 -0.676
+Species1:Age_class1               -0.620  0.582  0.550 -0.654
+Species2:Age_class1               -0.572  0.542  0.644 -0.669
+Species1:Sample_period             0.548 -0.899 -0.347  0.604
+Species2:Sample_period             0.562 -0.345 -0.899  0.558
+Age_class1:Sample_period          -0.625  0.599  0.554 -0.904
+Species1:Age_class1:Sample_period  0.560 -0.528 -0.496  0.592
+Species2:Age_class1:Sample_period  0.516 -0.497 -0.576  0.607
+                                  Smpl_p Sp1:A_1 Sp2:A_1 Sp1:S_
+Species1                                                       
+Species2                                                       
+Age_class1                                                     
+Sample_period                                                  
+Species1:Age_class1                0.604                       
+Species2:Age_class1                0.557  0.386                
+Species1:Sample_period            -0.656 -0.531  -0.499        
+Species2:Sample_period            -0.671 -0.500  -0.580   0.387
+Age_class1:Sample_period           0.747  0.592   0.606  -0.667
+Species1:Age_class1:Sample_period -0.667 -0.906  -0.349   0.588
+Species2:Age_class1:Sample_period -0.616 -0.348  -0.904   0.552
+                                  Sp2:S_ A_1:S_ S1:A_1:
+Species1                                               
+Species2                                               
+Age_class1                                             
+Sample_period                                          
+Species1:Age_class1                                    
+Species2:Age_class1                                    
+Species1:Sample_period                                 
+Species2:Sample_period                                 
+Age_class1:Sample_period          -0.616               
+Species1:Age_class1:Sample_period  0.552 -0.656        
+Species2:Age_class1:Sample_period  0.642 -0.671  0.387 
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-1.55369007 -0.41876288 -0.24152993  0.01138407 11.21226404 
+
+Number of Observations: 5556
+Number of Groups: 
+                        plot_age_class 
+                                     6 
+              Plot %in% plot_age_class 
+                                    18 
+Tree_num %in% Plot %in% plot_age_class 
+                                   301 
+R Console
+Description:df [1 x 3]
+ 
+ 
+AIC
+<dbl>
+BIC
+<dbl>
+logLik
+<dbl>
+35013.56	35126.11	-17489.78	
+1 row
+data.frame
+1 x 3
+Description:df [12 x 5]
+ 
+ 
+Value
+<chr>
+(Intercept)	1.0286782	
+Species1	2.1274683	
+Species2	-0.5059876	
+Age_class1	-0.6026049	
+Sample_period	1.0662498	
+Species1:Age_class1	0.5772445	
+Species2:Age_class1	0.4892877	
+Species1:Sample_period	-1.2620303	
+Species2:Sample_period	-0.1137064	
+Age_class1:Sample_period	0.2803926	
+1-10 of 12 rows | 1-2 of 5 columns
+data.frame
+12 x 5
+Description:df [12 x 5]
+ 
+ 
+Value
+<chr>
+Std.Error
+<chr>
+DF
+<chr>
+(Intercept)	1.0286782	0.4828562	5245	
+Species1	2.1274683	0.5062100	5245	
+Species2	-0.5059876	0.5033387	5245	
+Age_class1	-0.6026049	0.4469863	282	
+Sample_period	1.0662498	0.2695001	5245	
+Species1:Age_class1	0.5772445	0.5026265	5245	
+Species2:Age_class1	0.4892877	0.5005708	5245	
+Species1:Sample_period	-1.2620303	0.3029511	5245	
+Species2:Sample_period	-0.1137064	0.3013717	5245	
+Age_class1:Sample_period	0.2803926	0.2695033	5245	
+1-10 of 12 rows | 1-4 of 5 columns
+Show in New Window
+Error in pchisq(Pearson.chisq, df = rdf, lower.tail = FALSE) : Non-numeric argument to mathematical function
+Show in New Window
+$emmeans
+ Species      Age_class emmean    SE   df lower.CL upper.CL
+ Beech        Sapling    0.601 0.126 2783    0.354    0.847
+ Sweet gum    Sapling    0.844 0.130 2783    0.590    1.099
+ Tulip poplar Sapling    1.517 0.342 2783    0.847    2.188
+ Beech        Mature     0.701 0.125 2783    0.457    0.946
+ Sweet gum    Mature     0.567 0.114 2783    0.344    0.790
+ Tulip poplar Mature     1.588 0.120 2783    1.352    1.824
+
+Results are given on the log (not the response) scale. 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast                                   estimate    SE   df t.ratio
+ Beech Sapling - Sweet gum Sapling           -0.2439 0.143 2783  -1.703
+ Beech Sapling - Tulip poplar Sapling        -0.9169 0.344 2783  -2.669
+ Beech Sapling - Beech Mature                -0.1008 0.125 2783  -0.808
+ Beech Sapling - Sweet gum Mature             0.0340 0.128 2783   0.267
+ Beech Sapling - Tulip poplar Mature         -0.9874 0.137 2783  -7.207
+ Sweet gum Sapling - Tulip poplar Sapling    -0.6730 0.348 2783  -1.931
+ Sweet gum Sapling - Beech Mature             0.1431 0.143 2783   0.999
+ Sweet gum Sapling - Sweet gum Mature         0.2779 0.128 2783   2.166
+ Sweet gum Sapling - Tulip poplar Mature     -0.7435 0.134 2783  -5.547
+ Tulip poplar Sapling - Beech Mature          0.8161 0.343 2783   2.378
+ Tulip poplar Sapling - Sweet gum Mature      0.9509 0.342 2783   2.781
+ Tulip poplar Sapling - Tulip poplar Mature  -0.0705 0.344 2783  -0.205
+ Beech Mature - Sweet gum Mature              0.1348 0.126 2783   1.068
+ Beech Mature - Tulip poplar Mature          -0.8866 0.136 2783  -6.539
+ Sweet gum Mature - Tulip poplar Mature      -1.0214 0.120 2783  -8.494
+ p.value
+  0.5301
+  0.0819
+  0.9661
+  0.9998
+  <.0001
+  0.3831
+  0.9184
+  0.2544
+  <.0001
+  0.1642
+  0.0608
+  1.0000
+  0.8943
+  <.0001
+  <.0001
+
+Results are given on the log (not the response) scale. 
+P value adjustment: tukey method for comparing a family of 6 estimates 
 
 
 non-normal model with seedling data and without sample period
 **Model 1** -- Amy please rerun using damageJuly instead of damage2
 ```{r}
 
-damageJuly$Percent_total_herbivory <- as.integer(as.numeric(damage2$Percent_total_herbivory))
+damageJuly$Percent_total_herbivory <- as.integer(as.numeric(damageJuly$Percent_total_herbivory))
 
 #insectherbModeloverdisp2 <-glmmTMB(Percent_total_herbivory~ Species*Age_class+(1|plot_age_class/Plot/Tree_num), data = damage2, family = genpois)
 
@@ -231,11 +410,13 @@ testUniformity(insectherbModeloverdisp2) #not significant, good
 testOutliers(insectherbModeloverdisp2) #not significant, good
 
 drop1(insectherbModeloverdisp2, test = 'Chisq')
+#Single term deletions
+
 #Model:
 #Percent_total_herbivory ~ Species * Age_class + (1 | plot_age_class/Plot/Tree_num)
 #                  Df   AIC    LRT  Pr(>Chi)    
-#<none>               20854                     
-#Species:Age_class  4 20866 20.342 0.0004274 ***
+#<none>               10205                     
+#Species:Age_class  4 10217 20.453 0.0004064 ***
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -243,16 +424,75 @@ Anova(insectherbModeloverdisp2)
 
 #Analysis of Deviance Table (Type II Wald chisquare tests)
 
-#Response: Percent_total_herbivory
+#esponse: Percent_total_herbivory
+
 #                    Chisq Df Pr(>Chisq)    
-#Species            87.067  2  < 2.2e-16 ***
-#Age_class         150.575  2  < 2.2e-16 ***
-#Species:Age_class  16.278  4   0.002668 ** 
+#Species            93.528  2  < 2.2e-16 ***
+#Age_class         130.425  2  < 2.2e-16 ***
+#Species:Age_class  16.502  4   0.002414 ** 
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 emmeans(insectherbModeloverdisp2, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 ```
+$emmeans
+ Species      Age_class emmean     SE   df lower.CL upper.CL
+ Beech        Seedling  -0.527 0.2037 3436  -0.9268   -0.128
+ Sweet gum    Seedling  -1.176 0.1880 3436  -1.5449   -0.808
+ Tulip poplar Seedling  -1.831 0.5178 3436  -2.8466   -0.816
+ Beech        Sapling    0.888 0.0979 3436   0.6961    1.080
+ Sweet gum    Sapling    0.285 0.1173 3436   0.0554    0.515
+ Tulip poplar Sapling   -0.122 0.4445 3436  -0.9933    0.750
+ Beech        Mature     0.992 0.0974 3436   0.8010    1.183
+ Sweet gum    Mature     0.172 0.0996 3436  -0.0233    0.367
+ Tulip poplar Mature     1.130 0.0993 3436   0.9351    1.325
+
+Results are given on the log (not the response) scale. 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast                                     estimate    SE   df t.ratio p.value
+ Beech Seedling - Sweet gum Seedling             0.649 0.264 3436   2.458  0.2534
+ Beech Seedling - Tulip poplar Seedling          1.304 0.550 3436   2.371  0.3003
+ Beech Seedling - Beech Sapling                 -1.416 0.209 3436  -6.759  <.0001
+ Beech Seedling - Sweet gum Sapling             -0.813 0.221 3436  -3.685  0.0072
+ Beech Seedling - Tulip poplar Sapling          -0.406 0.482 3436  -0.843  0.9955
+ Beech Seedling - Beech Mature                  -1.519 0.209 3436  -7.261  <.0001
+ Beech Seedling - Sweet gum Mature              -0.699 0.213 3436  -3.282  0.0288
+ Beech Seedling - Tulip poplar Mature           -1.657 0.216 3436  -7.683  <.0001
+ Sweet gum Seedling - Tulip poplar Seedling      0.655 0.544 3436   1.205  0.9556
+ Sweet gum Seedling - Beech Sapling             -2.064 0.197 3436 -10.481  <.0001
+ Sweet gum Seedling - Sweet gum Sapling         -1.462 0.204 3436  -7.149  <.0001
+ Sweet gum Seedling - Tulip poplar Sapling      -1.054 0.476 3436  -2.214  0.3963
+ Sweet gum Seedling - Beech Mature              -2.168 0.197 3436 -10.994  <.0001
+ Sweet gum Seedling - Sweet gum Mature          -1.348 0.196 3436  -6.863  <.0001
+ Sweet gum Seedling - Tulip poplar Mature       -2.306 0.197 3436 -11.702  <.0001
+ Tulip poplar Seedling - Beech Sapling          -2.719 0.521 3436  -5.219  <.0001
+ Tulip poplar Seedling - Sweet gum Sapling      -2.117 0.524 3436  -4.040  0.0018
+ Tulip poplar Seedling - Tulip poplar Sapling   -1.710 0.678 3436  -2.520  0.2224
+ Tulip poplar Seedling - Beech Mature           -2.823 0.521 3436  -5.419  <.0001
+ Tulip poplar Seedling - Sweet gum Mature       -2.003 0.521 3436  -3.844  0.0039
+ Tulip poplar Seedling - Tulip poplar Mature    -2.961 0.521 3436  -5.683  <.0001
+ Beech Sapling - Sweet gum Sapling               0.603 0.134 3436   4.504  0.0002
+ Beech Sapling - Tulip poplar Sapling            1.010 0.448 3436   2.257  0.3691
+ Beech Sapling - Beech Mature                   -0.104 0.112 3436  -0.926  0.9915
+ Beech Sapling - Sweet gum Mature                0.716 0.117 3436   6.105  <.0001
+ Beech Sapling - Tulip poplar Mature            -0.242 0.119 3436  -2.028  0.5239
+ Sweet gum Sapling - Tulip poplar Sapling        0.407 0.453 3436   0.899  0.9931
+ Sweet gum Sapling - Beech Mature               -0.707 0.134 3436  -5.260  <.0001
+ Sweet gum Sapling - Sweet gum Mature            0.113 0.131 3436   0.866  0.9946
+ Sweet gum Sapling - Tulip poplar Mature        -0.844 0.132 3436  -6.409  <.0001
+ Tulip poplar Sapling - Beech Mature            -1.114 0.447 3436  -2.490  0.2370
+ Tulip poplar Sapling - Sweet gum Mature        -0.294 0.448 3436  -0.655  0.9993
+ Tulip poplar Sapling - Tulip poplar Mature     -1.252 0.448 3436  -2.792  0.1178
+ Beech Mature - Sweet gum Mature                 0.820 0.117 3436   6.992  <.0001
+ Beech Mature - Tulip poplar Mature             -0.138 0.118 3436  -1.164  0.9639
+ Sweet gum Mature - Tulip poplar Mature         -0.958 0.116 3436  -8.224  <.0001
+
+Results are given on the log (not the response) scale. 
+P value adjustment: tukey method for comparing a family of 9 estimates 
+
+
 
 ###Microbial models###
 **Model 2** -- Amy, please rerun using damageOct instead of damage1
@@ -269,37 +509,74 @@ plot(model_check3) #KS test = deviation significant, might not be of concern? th
 
 #Amy also ran...#
 testZeroInflation(insectherbModeloverdisp3) #not significant, good
-testUniformity(insectherbModeloverdisp3) #significant deviation
+testUniformity(insectherbModeloverdisp3) #not significant deviation
 testOutliers(insectherbModeloverdisp3) #not significant, good
 
 drop1(insectherbModeloverdisp3, test = 'Chisq')
+#Single term deletions
+
 #Model:
-#Percent_microbial ~ Species * Age_class * Sample_period + (1 | 
-#    plot_age_class/Plot/Tree_num)
-#                                Df   AIC    LRT  Pr(>Chi)    
-#<none>                             26498                     
-#Species:Age_class:Sample_period  2 26526 31.942 1.158e-07 ***
-#---
-#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#Percent_microbial ~ Species * Age_class + (1 | plot_age_class/Plot/Tree_num)
+#                  Df   AIC    LRT Pr(>Chi)
+#<none>               16087                
+#Species:Age_class  2 16086 3.1902   0.2029
 
 Anova(insectherbModeloverdisp3)
 #Analysis of Deviance Table (Type II Wald chisquare tests)
 
 #Response: Percent_microbial
-#                                    Chisq Df Pr(>Chisq)    
-#Species                          216.6381  2  < 2.2e-16 ***
-#Age_class                          1.0601  1    0.30320    
-#Sample_period                   1765.5411  1  < 2.2e-16 ***
-#Species:Age_class                  0.9832  2    0.61164    
-#Species:Sample_period            192.9121  2  < 2.2e-16 ***
-#Age_class:Sample_period            5.8862  1    0.01526 *  
-#Species:Age_class:Sample_period   31.6474  2  1.342e-07 ***
+#                     Chisq Df Pr(>Chisq)    
+#Species           122.2604  2     <2e-16 ***
+#Age_class           0.7972  1     0.3719    
+#Species:Age_class   3.1985  2     0.2020    
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 emmeans(insectherbModeloverdisp3, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 
 ```
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_microbial
+                     Chisq Df Pr(>Chisq)    
+Species           122.2604  2     <2e-16 ***
+Age_class           0.7972  1     0.3719    
+Species:Age_class   3.1985  2     0.2020    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> emmeans(insectherbModeloverdisp3, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+$emmeans
+ Species      Age_class emmean    SE   df lower.CL upper.CL
+ Beech        Sapling     1.30 0.104 2783     1.09     1.50
+ Sweet gum    Sapling     2.12 0.106 2783     1.91     2.33
+ Tulip poplar Sapling     2.12 0.351 2783     1.43     2.81
+ Beech        Mature      1.21 0.106 2783     1.00     1.42
+ Sweet gum    Mature      2.33 0.086 2783     2.16     2.49
+ Tulip poplar Mature      2.23 0.105 2783     2.02     2.43
+
+Results are given on the log (not the response) scale. 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast                                   estimate    SE   df t.ratio p.value
+ Beech Sapling - Sweet gum Sapling          -0.82131 0.130 2783  -6.319  <.0001
+ Beech Sapling - Tulip poplar Sapling       -0.81927 0.358 2783  -2.289  0.1988
+ Beech Sapling - Beech Mature                0.08780 0.121 2783   0.724  0.9790
+ Beech Sapling - Sweet gum Mature           -1.02761 0.115 2783  -8.942  <.0001
+ Beech Sapling - Tulip poplar Mature        -0.92824 0.131 2783  -7.104  <.0001
+ Sweet gum Sapling - Tulip poplar Sapling    0.00204 0.360 2783   0.006  1.0000
+ Sweet gum Sapling - Beech Mature            0.90911 0.132 2783   6.871  <.0001
+ Sweet gum Sapling - Sweet gum Mature       -0.20630 0.113 2783  -1.830  0.4465
+ Sweet gum Sapling - Tulip poplar Mature    -0.10694 0.127 2783  -0.842  0.9596
+ Tulip poplar Sapling - Beech Mature         0.90707 0.358 2783   2.534  0.1146
+ Tulip poplar Sapling - Sweet gum Mature    -0.20834 0.353 2783  -0.590  0.9918
+ Tulip poplar Sapling - Tulip poplar Mature -0.10898 0.358 2783  -0.304  0.9997
+ Beech Mature - Sweet gum Mature            -1.11541 0.116 2783  -9.583  <.0001
+ Beech Mature - Tulip poplar Mature         -1.01604 0.132 2783  -7.685  <.0001
+ Sweet gum Mature - Tulip poplar Mature      0.09937 0.110 2783   0.902  0.9461
+
+Results are given on the log (not the response) scale. 
+P value adjustment: tukey method for comparing a family of 6 estimates 
 
 microbial models for seedlings without sampling period
 **Model 1** -- Amy please rerun using damageJuly instead of damage2
@@ -321,11 +598,13 @@ testUniformity(insectherbModeloverdisp4) #significant deviation
 testOutliers(insectherbModeloverdisp4) #not signfificant, good
 
 drop1(insectherbModeloverdisp4, test = 'Chisq')
+#Single term deletions
+
 #Model:
 #Percent_microbial ~ Species * Age_class + (1 | plot_age_class/Plot/Tree_num)
 #                  Df   AIC    LRT  Pr(>Chi)    
-#<none>               30659                     
-#Species:Age_class  4 30732 81.004 < 2.2e-16 ***
+#<none>               12092                     
+#Species:Age_class  4 12193 109.58 < 2.2e-16 ***
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
@@ -335,16 +614,71 @@ Anova(insectherbModeloverdisp4)
 
 #Response: Percent_microbial
 #                    Chisq Df Pr(>Chisq)    
-#Species           191.951  2  < 2.2e-16 ***
-#Age_class         194.177  2  < 2.2e-16 ***
-#Species:Age_class  88.239  4  < 2.2e-16 ***
+#Species           207.622  2  < 2.2e-16 ***
+#Age_class          42.263  2  6.649e-10 ***
+#Species:Age_class 123.895  4  < 2.2e-16 ***
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 emmeans(insectherbModeloverdisp4, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
 ```
 
+$emmeans
+ Species      Age_class emmean     SE   df lower.CL upper.CL
+ Beech        Seedling   0.242 0.1905 3436   -0.132   0.6153
+ Sweet gum    Seedling  -0.336 0.1372 3436   -0.605  -0.0666
+ Tulip poplar Seedling   0.654 0.2369 3436    0.190   1.1186
+ Beech        Sapling   -1.043 0.1518 3436   -1.340  -0.7450
+ Sweet gum    Sapling    1.177 0.1215 3436    0.939   1.4157
+ Tulip poplar Sapling    1.728 0.4028 3436    0.938   2.5176
+ Beech        Mature    -0.664 0.1434 3436   -0.945  -0.3827
+ Sweet gum    Mature     1.207 0.0987 3436    1.013   1.4001
+ Tulip poplar Mature     1.421 0.1168 3436    1.192   1.6501
 
+Results are given on the log (not the response) scale. 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast                                     estimate    SE   df t.ratio p.value
+ Beech Seedling - Sweet gum Seedling            0.5775 0.219 3436   2.636  0.1719
+ Beech Seedling - Tulip poplar Seedling        -0.4123 0.290 3436  -1.421  0.8900
+ Beech Seedling - Beech Sapling                 1.2844 0.219 3436   5.877  <.0001
+ Beech Seedling - Sweet gum Sapling            -0.9356 0.216 3436  -4.340  0.0005
+ Beech Seedling - Tulip poplar Sapling         -1.4859 0.441 3436  -3.369  0.0217
+ Beech Seedling - Beech Mature                  0.9057 0.213 3436   4.244  0.0008
+ Beech Seedling - Sweet gum Mature             -0.9647 0.208 3436  -4.643  0.0001
+ Beech Seedling - Tulip poplar Mature          -1.1792 0.219 3436  -5.385  <.0001
+ Sweet gum Seedling - Tulip poplar Seedling    -0.9898 0.261 3436  -3.785  0.0049
+ Sweet gum Seedling - Beech Sapling             0.7069 0.188 3436   3.767  0.0053
+ Sweet gum Seedling - Sweet gum Sapling        -1.5131 0.163 3436  -9.283  <.0001
+ Sweet gum Seedling - Tulip poplar Sapling     -2.0634 0.420 3436  -4.908  <.0001
+ Sweet gum Seedling - Beech Mature              0.3282 0.182 3436   1.799  0.6828
+ Sweet gum Seedling - Sweet gum Mature         -1.5423 0.151 3436 -10.224  <.0001
+ Sweet gum Seedling - Tulip poplar Mature      -1.7567 0.164 3436 -10.716  <.0001
+ Tulip poplar Seedling - Beech Sapling          1.6967 0.268 3436   6.323  <.0001
+ Tulip poplar Seedling - Sweet gum Sapling     -0.5233 0.256 3436  -2.047  0.5100
+ Tulip poplar Seedling - Tulip poplar Sapling  -1.0736 0.463 3436  -2.320  0.3302
+ Tulip poplar Seedling - Beech Mature           1.3180 0.263 3436   5.004  <.0001
+ Tulip poplar Seedling - Sweet gum Mature      -0.5524 0.248 3436  -2.231  0.3855
+ Tulip poplar Seedling - Tulip poplar Mature   -0.7669 0.255 3436  -3.003  0.0670
+ Beech Sapling - Sweet gum Sapling             -2.2200 0.181 3436 -12.243  <.0001
+ Beech Sapling - Tulip poplar Sapling          -2.7703 0.423 3436  -6.547  <.0001
+ Beech Sapling - Beech Mature                  -0.3787 0.185 3436  -2.050  0.5083
+ Beech Sapling - Sweet gum Mature              -2.2492 0.167 3436 -13.434  <.0001
+ Beech Sapling - Tulip poplar Mature           -2.4636 0.179 3436 -13.739  <.0001
+ Sweet gum Sapling - Tulip poplar Sapling      -0.5503 0.415 3436  -1.326  0.9237
+ Sweet gum Sapling - Beech Mature               1.8413 0.176 3436  10.477  <.0001
+ Sweet gum Sapling - Sweet gum Mature          -0.0291 0.135 3436  -0.215  1.0000
+ Sweet gum Sapling - Tulip poplar Mature       -0.2436 0.149 3436  -1.639  0.7834
+ Tulip poplar Sapling - Beech Mature            2.3916 0.420 3436   5.699  <.0001
+ Tulip poplar Sapling - Sweet gum Mature        0.5211 0.408 3436   1.279  0.9376
+ Tulip poplar Sapling - Tulip poplar Mature     0.3067 0.412 3436   0.745  0.9981
+ Beech Mature - Sweet gum Mature               -1.8704 0.160 3436 -11.687  <.0001
+ Beech Mature - Tulip poplar Mature            -2.0849 0.172 3436 -12.122  <.0001
+ Sweet gum Mature - Tulip poplar Mature        -0.2145 0.130 3436  -1.646  0.7791
+
+Results are given on the log (not the response) scale. 
+P value adjustment: tukey method for comparing a family of 9 estimates 
 
 graphs
 ```{r}
