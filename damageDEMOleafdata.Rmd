@@ -195,7 +195,7 @@ Anova(insectherbModeloverdisp) #Wald's test not prefferred for model type, but g
 #Analysis of Deviance Table (Type II Wald chisquare tests)
 
 #Response: Percent_total_herbivory
-                    Chisq Df Pr(>Chisq)    
+  #                  Chisq Df Pr(>Chisq)    
 #Species           80.2641  2    < 2e-16 ***
 #Age_class          0.7174  1    0.39701    
 #Species:Age_class  4.6923  2    0.09574 .  
@@ -204,7 +204,7 @@ Anova(insectherbModeloverdisp) #Wald's test not prefferred for model type, but g
 
 
 
-emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+emmeans(insectherbModeloverdisp, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey", type = "response") #add type = reponse for poisson distribution, from this website https://cran.r-project.org/web/packages/emmeans/vignettes/sophisticated.html
 
 
 
@@ -433,7 +433,7 @@ Anova(insectherbModeloverdisp2)
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-emmeans(insectherbModeloverdisp2, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+emmeans(insectherbModeloverdisp2, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey", type = "response") #add type = reponse for poisson distribution, from this website https://cran.r-project.org/web/packages/emmeans/vignettes/sophisticated.html
 ```
 $emmeans
  Species      Age_class emmean     SE   df lower.CL upper.CL
@@ -532,7 +532,7 @@ Anova(insectherbModeloverdisp3)
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-emmeans(insectherbModeloverdisp3, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+emmeans(insectherbModeloverdisp3, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey", type = "response") #add type = reponse for poisson distribution, from this website https://cran.r-project.org/web/packages/emmeans/vignettes/sophisticated.html)
 
 ```
 Analysis of Deviance Table (Type II Wald chisquare tests)
@@ -620,7 +620,7 @@ Anova(insectherbModeloverdisp4)
 #---
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
-emmeans(insectherbModeloverdisp4, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey")
+emmeans(insectherbModeloverdisp4, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey", type = "response") #add type = reponse for poisson distribution, from this website https://cran.r-project.org/web/packages/emmeans/vignettes/sophisticated.html)
 ```
 
 $emmeans
@@ -681,6 +681,7 @@ Results are given on the log (not the response) scale.
 P value adjustment: tukey method for comparing a family of 9 estimates 
 
 graphs
+**herbivory model 2**
 ```{r}
 
 
@@ -691,7 +692,7 @@ theme_update(axis.title.x=element_text(size=24, vjust=-0.35), axis.text.x=elemen
              panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
              legend.title=element_blank(), legend.text=element_text(size=18), panel.border=element_rect(color="black", fill = NA, size = 1))
 
-ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+ggplot(data=barGraphStats(data=damageOct, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
   geom_bar(stat='identity', position=position_dodge()) +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
   theme(legend.title=element_blank())+
@@ -700,12 +701,12 @@ ggplot(data=barGraphStats(data=damage1, variable="Percent_total_herbivory", byFa
   ylab('Mean Percent Herbivore Damage\n')+
   xlab(element_blank())+
   expand_limits(y=4) +
-  annotate("text", x= 0.77, y = 3.5, label= "a", size = 6)+
-  annotate("text", x= 1.23, y = 3.7, label= "a", size = 6)+
-  annotate("text", x= 1.77, y = 2.7, label= "b", size = 6)+
-  annotate("text", x= 2.23, y = 2.2, label= "b", size = 6)+
-  annotate("text", x= 2.77, y = 3.4, label= "ab", size = 6)+
-  annotate("text", x= 3.23, y = 3.8, label= "a", size = 6)+
+  annotate("text", x= 0.77, y = 3.5, label= "b", size = 6)+
+  annotate("text", x= 1.23, y = 3.7, label= "b", size = 6)+
+  annotate("text", x= 1.77, y = 3.5, label= "b", size = 6)+
+  annotate("text", x= 2.23, y = 2.5, label= "b", size = 6)+
+  annotate("text", x= 2.77, y = 5.2, label= "ab", size = 6)+
+  annotate("text", x= 3.23, y = 5.1, label= "a", size = 6)+
   theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
   expand_limits(y=9)
 ```
@@ -721,7 +722,7 @@ emmeans(insectherbModelseed, pairwise~as.factor(Species)*as.factor(Age_class), a
 
 graphing with seedlings
 ```{r}
-ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+ggplot(data=barGraphStats(data=damageJuly, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
   geom_bar(stat='identity', position=position_dodge()) +
   geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
   theme(legend.title=element_blank())+
@@ -731,20 +732,29 @@ ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFa
   xlab(element_blank())+
   expand_limits(y=4) +
   theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
-  expand_limits(y=9)
+  expand_limits(y=9) +
+  annotate("text", x= 0.7, y = 2.4, label= "c", size = 6)+
+  annotate("text", x= 1.0, y = 3.7, label= "a", size = 6)+
+  annotate("text", x= 1.3, y = 3.75, label= "a", size = 6)+
+  annotate("text", x= 1.7, y = 0.75, label= "c", size = 6)+
+  annotate("text", x= 2.0, y = 2.3, label= "b", size = 6)+
+  annotate("text", x= 2.3, y = 2.2, label= "b", size = 6)+
+  annotate("text", x= 2.7, y = 0.4, label= "c", size = 6)+
+  annotate("text", x= 3.0, y = 2.1, label= "abc", size = 6)+
+  annotate("text", x= 3.3, y = 2.7, label= "a", size = 6)
 
-ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
-  geom_bar(stat='identity', position=position_dodge()) +
-  geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
-  theme(legend.title=element_blank())+
-  theme_bw()+
-  scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "darkolivegreen"))+
-  ylab('Mean Percent Herbivore Damage\n')+
-  xlab(element_blank())+
-  expand_limits(y=4) +
-  theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
-  expand_limits(y=9)+
-  facet_wrap(~Sample_period)
+#ggplot(data=barGraphStats(data=damage2, variable="Percent_total_herbivory", byFactorNames=c("Species", "Age_class")), aes(x=Species, y=mean, fill=Age_class)) +
+  #geom_bar(stat='identity', position=position_dodge()) +
+  #geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width=0.2, position=position_dodge(0.9))+
+  #theme(legend.title=element_blank())+
+  #theme_bw()+
+  #scale_fill_manual(values=c("darkolivegreen3", "darkolivegreen4", "darkolivegreen"))+
+  #ylab('Mean Percent Herbivore Damage\n')+
+  #xlab(element_blank())+
+  #expand_limits(y=4) +
+ # theme(legend.title=element_blank(),legend.text=element_text(size=16), axis.text.x=element_text(size=16, color = "black"), axis.title.y=element_text(size=18), axis.text.y=element_text(size=16, color= "black"), panel.grid.major=element_blank(), panel.grid.minor=element_blank())+
+  #expand_limits(y=9)+
+  #facet_wrap(~Sample_period)
 
 ```
 
