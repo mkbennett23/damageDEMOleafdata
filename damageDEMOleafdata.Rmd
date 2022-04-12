@@ -434,6 +434,9 @@ Anova(insectherbModeloverdisp2)
 #Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 emmeans(insectherbModeloverdisp2, pairwise~as.factor(Species)*as.factor(Age_class), adjust="tukey", type = "response") #add type = reponse for poisson distribution, from this website https://cran.r-project.org/web/packages/emmeans/vignettes/sophisticated.html
+
+blah <- glht(insectherbModeloverdisp2, linfct = mcp(period = "Tukey"))
+
 ```
 $emmeans
  Species      Age_class emmean     SE   df lower.CL upper.CL
@@ -832,8 +835,18 @@ drop1(herbivoryAgeBeech_lm, test = 'Chisq')
 Anova(herbivoryAgeBeech_lm)
 
 
-emmeans(herbivoryAgeBeech_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+plot(allEffects(herbivoryAgeBeech_lm))
 ```
+
+Single term deletions
+
+Model:
+Percent_total_herbivory ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC    LRT Pr(>Chi)  
+<none>                4698.9                  
+Age_class:plot_age  2 4699.9 5.0292  0.08089 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 ```{r}
 herbivoryAgeBeech2_lm <-glmmTMB(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Beech"), family = genpois)
@@ -854,13 +867,51 @@ drop1(herbivoryAgeBeech2_lm, test = 'Chisq')
 Anova(herbivoryAgeBeech2_lm)
 
 
-emmeans(herbivoryAgeBeech2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+#emmeans(herbivoryAgeBeech2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 
 ```
+	DHARMa zero-inflation test via comparison to expected zeros with simulation under H0 = fitted model
 
+data:  simulationOutput
+ratioObsSim = 1.0073, p-value = 0.768
+alternative hypothesis: two.sided
+
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.017521, p-value = 0.8896
+alternative hypothesis: two-sided
+
+
+	DHARMa outlier test based on exact binomial test with approximate expectations
+
+data:  herbivoryAgeBeech2_lm
+outliers at both margin(s) = 5, observations = 1096, p-value = 0.3029
+alternative hypothesis: true probability of success is not equal to 0.007968127
+95 percent confidence interval:
+ 0.001482892 0.010613933
+sample estimates:
+frequency of outliers (expected: 0.00796812749003984 ) 
+                                           0.004562044 
+
+Single term deletions
+
+Model:
+Percent_total_herbivory ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC    LRT Pr(>Chi)
+<none>                4093.7                
+Age_class:plot_age  1 4092.9 1.1885   0.2756
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_total_herbivory
+                    Chisq Df Pr(>Chisq)
+Age_class          0.5092  1     0.4755
+plot_age           2.1744  1     0.1403
+Age_class:plot_age 1.1938  1     0.2746
 
 ```{r}
-herbivoryAgeSG_lm <- glmm(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Sweet gum"), family = genpois)
+herbivoryAgeSG_lm <- glmmTMB(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Sweet gum"), family = genpois)
 
 ##model checking##
 model_check7 <- simulateResiduals(herbivoryAgeSG_lm)
@@ -876,13 +927,23 @@ drop1(herbivoryAgeSG_lm, test = 'Chisq')
 
 Anova(herbivoryAgeSG_lm)
 
+plot(allEffects(herbivoryAgeSG_lm))
 
-emmeans(herbivoryAgeSG_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+#emmeans(herbivoryAgeSG_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 
 ```
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_total_herbivory
+                     Chisq Df Pr(>Chisq)    
+Age_class          51.8838  2  5.415e-12 ***
+plot_age            7.0069  1   0.008119 ** 
+Age_class:plot_age  2.5593  2   0.278131    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 ```{r}
-herbivoryAgeSG2_lm <- glmm(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Sweet gum"), family = genpois)
+herbivoryAgeSG2_lm <- glmmTMB(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Sweet gum"), family = genpois)
 
 ##model checking##
 model_check8 <- simulateResiduals(herbivoryAgeSG2_lm)
@@ -898,13 +959,54 @@ drop1(herbivoryAgeSG2_lm, test = 'Chisq')
 
 Anova(herbivoryAgeSG2_lm)
 
-
-emmeans(herbivoryAgeSG2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+plot(allEffects(herbivoryAgeSG2_lm))
+#emmeans(herbivoryAgeSG2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 ```
+NA/NaN function evaluation
+	DHARMa zero-inflation test via comparison to expected zeros with simulation under H0 = fitted model
 
+data:  simulationOutput
+ratioObsSim = 1.0241, p-value = 0.784
+alternative hypothesis: two.sided
+
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.025166, p-value = 0.4292
+alternative hypothesis: two-sided
+
+
+	DHARMa outlier test based on exact binomial test with approximate expectations
+
+data:  herbivoryAgeSG2_lm
+outliers at both margin(s) = 8, observations = 1207, p-value = 0.7457
+alternative hypothesis: true probability of success is not equal to 0.007968127
+95 percent confidence interval:
+ 0.002865716 0.013017836
+sample estimates:
+frequency of outliers (expected: 0.00796812749003984 ) 
+                                           0.006628003 
+
+Single term deletions
+
+Model:
+Percent_total_herbivory ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC     LRT Pr(>Chi)
+<none>                4065.0                 
+Age_class:plot_age  1 4063.2 0.19872   0.6558
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_total_herbivory
+                    Chisq Df Pr(>Chisq)  
+Age_class          3.1502  1    0.07592 .
+plot_age           5.1938  1    0.02267 *
+Age_class:plot_age 0.1989  1    0.65561  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 ```{r}
-herbivoryAgeTP_lm <- glmm(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Tulip poplar"), family = genpois)
+herbivoryAgeTP_lm <- glmmTMB(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Tulip poplar"), family = genpois)
 
 ##model checking##
 model_check9 <- simulateResiduals(herbivoryAgeTP_lm)
@@ -921,11 +1023,55 @@ drop1(herbivoryAgeTP_lm, test = 'Chisq')
 Anova(herbivoryAgeTP_lm)
 
 
-emmeans(herbivoryAgeTP_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+#emmeans(herbivoryAgeTP_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 ```
+NA/NaN function evaluation
+	DHARMa zero-inflation test via comparison to expected zeros with simulation under H0 = fitted model
+
+data:  simulationOutput
+ratioObsSim = 1.0274, p-value = 0.824
+alternative hypothesis: two.sided
+
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.055318, p-value = 0.05116
+alternative hypothesis: two-sided
+
+
+	DHARMa outlier test based on exact binomial test with approximate expectations
+
+data:  herbivoryAgeTP_lm
+outliers at both margin(s) = 7, observations = 599, p-value = 0.2529
+alternative hypothesis: true probability of success is not equal to 0.007968127
+95 percent confidence interval:
+ 0.00471099 0.02392896
+sample estimates:
+frequency of outliers (expected: 0.00796812749003984 ) 
+                                            0.01168614 
+
+NA/NaN function evaluationSingle term deletions
+
+Model:
+Percent_total_herbivory ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC    LRT Pr(>Chi)
+<none>                2024.4                
+Age_class:plot_age  2 2024.7 4.2983   0.1166
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_total_herbivory
+                     Chisq Df Pr(>Chisq)    
+Age_class          28.5919  2  6.185e-07 ***
+plot_age            0.1600  1     0.6891    
+Age_class:plot_age  2.3282  2     0.3122    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
 
 ```{r}
-herbivoryAgeTP2_lm <- glmm(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Tulip poplar"), family = genpois)
+herbivoryAgeTP2_lm <- glmmTMB(Percent_total_herbivory~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Tulip poplar"), family = genpois)
 
 ##model checking##
 model_check10 <- simulateResiduals(herbivoryAgeTP2_lm)
@@ -942,14 +1088,54 @@ drop1(herbivoryAgeTP2_lm, test = 'Chisq')
 Anova(herbivoryAgeTP2_lm)
 
 
-emmeans(herbivoryAgeTP2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+#emmeans(herbivoryAgeTP2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 ```
+NA/NaN function evaluation
+	DHARMa zero-inflation test via comparison to expected zeros with simulation under H0 = fitted model
+
+data:  simulationOutput
+ratioObsSim = 0.98262, p-value = 1
+alternative hypothesis: two.sided
+
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.040629, p-value = 0.3936
+alternative hypothesis: two-sided
+
+
+	DHARMa bootstrapped outlier test
+
+data:  herbivoryAgeTP2_lm
+outliers at both margin(s) = 5, observations = 490, p-value = 0.26
+alternative hypothesis: two.sided
+ percent confidence interval:
+ 0.00000000 0.01127551
+sample estimates:
+outlier frequency (expected: 0.00551020408163265 ) 
+                                        0.01020408 
+
+NA/NaN function evaluationSingle term deletions
+
+Model:
+Percent_total_herbivory ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC    LRT Pr(>Chi)
+<none>                2434.4                
+Age_class:plot_age  1 2432.7 0.2838   0.5942
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_total_herbivory
+                    Chisq Df Pr(>Chisq)
+Age_class          0.1397  1     0.7085
+plot_age           0.4957  1     0.4814
+Age_class:plot_age 0.3151  1     0.5746
 
 
 *Microbial Damage by Plot Age and life stage (age_class)* One model per species, per sample period
 
 ```{r}
-microbialAgeBeech_lm <- glmm(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Beech"), family = genpois)
+microbialAgeBeech_lm <- glmmTMB(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Beech"), family = genpois)
 
 ##model checking##
 model_check11 <- simulateResiduals(microbialAgeBeech_lm)
@@ -966,12 +1152,54 @@ drop1(microbialAgeBeech_lm, test = 'Chisq')
 Anova(microbialAgeBeech_lm)
 
 
-emmeans(microbialAgeBeech_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+#emmeans(microbialAgeBeech_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 ```
+non-integer counts in a genpois model
+	DHARMa zero-inflation test via comparison to expected zeros with simulation under H0 = fitted model
 
+data:  simulationOutput
+ratioObsSim = 0.68314, p-value < 2.2e-16
+alternative hypothesis: two.sided
+
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.13821, p-value < 2.2e-16
+alternative hypothesis: two-sided
+
+DHARMa:testOutliers with type = binomial may have inflated Type I error rates for integer-valued distributions. To get a more exact result, it is recommended to re-run testOutliers with type = 'bootstrap'. See ?testOutliers for details
+
+	DHARMa outlier test based on exact binomial test with approximate expectations
+
+data:  microbialAgeBeech_lm
+outliers at both margin(s) = 17, observations = 1273, p-value = 0.03885
+alternative hypothesis: true probability of success is not equal to 0.007968127
+95 percent confidence interval:
+ 0.007798085 0.021295642
+sample estimates:
+frequency of outliers (expected: 0.00796812749003984 ) 
+                                            0.01335428 
+
+non-integer counts in a genpois modelSingle term deletions
+
+Model:
+Percent_microbial ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC    LRT Pr(>Chi)
+<none>                2819.0                
+Age_class:plot_age  2 2816.4 1.3903    0.499
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_microbial
+                     Chisq Df Pr(>Chisq)    
+Age_class          22.5707  2  1.256e-05 ***
+plot_age            1.4835  1     0.2232    
+Age_class:plot_age  1.3812  2     0.5013    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 ```{r}
-microbialAgeBeech2_lm <- glmm(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Beech"), family = genpois)
+microbialAgeBeech2_lm <- glmmTMB(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Beech"), family = genpois)
 
 ##model checking##
 model_check12 <- simulateResiduals(microbialAgeBeech2_lm)
@@ -988,29 +1216,108 @@ drop1(microbialAgeBeech2_lm, test = 'Chisq')
 Anova(microbialAgeBeech2_lm)
 
 
-emmeans(microbialAgeBeech2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
+#emmeans(microbialAgeBeech2_lm, pairwise~as.factor(plot_age)*as.factor(Age_class), adjust="tukey", type = "response")
 ```
+non-integer counts in a genpois modelNA/NaN function evaluation
+	DHARMa zero-inflation test via comparison to expected zeros with simulation under H0 = fitted model
+
+data:  simulationOutput
+ratioObsSim = 0.68952, p-value = 0.008
+alternative hypothesis: two.sided
+
+
+	One-sample Kolmogorov-Smirnov test
+
+data:  simulationOutput$scaledResiduals
+D = 0.032485, p-value = 0.1977
+alternative hypothesis: two-sided
+
+
+	DHARMa outlier test based on exact binomial test with approximate expectations
+
+data:  microbialAgeBeech2_lm
+outliers at both margin(s) = 12, observations = 1096, p-value = 0.235
+alternative hypothesis: true probability of success is not equal to 0.007968127
+95 percent confidence interval:
+ 0.00566990 0.01904736
+sample estimates:
+frequency of outliers (expected: 0.00796812749003984 ) 
+                                            0.01094891 
+
+non-integer counts in a genpois modelNA/NaN function evaluationSingle term deletions
+
+Model:
+Percent_microbial ~ Age_class * plot_age + (1 | Plot/Tree_num)
+                   Df    AIC    LRT Pr(>Chi)
+<none>                4961.3                
+Age_class:plot_age  1 4959.7 0.4753   0.4906
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_microbial
+                    Chisq Df Pr(>Chisq)
+Age_class          0.1303  1     0.7182
+plot_age           2.6802  1     0.1016
+Age_class:plot_age 0.4783  1     0.4892
+
+```{r}
+microbialAgeSG_lm <- glmmTMB(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Sweet gum"), family = genpois)
+
+Anova(microbialAgeSG_lm)
+```
+non-integer counts in a genpois modelNA/NaN function evaluationAnalysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_microbial
+                      Chisq Df Pr(>Chisq)    
+Age_class          128.6568  2     <2e-16 ***
+plot_age             2.3516  1     0.1252    
+Age_class:plot_age   0.7251  2     0.6959    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 
 ```{r}
-microbialAgeSG_lm <- glmm(Percent_microbial~ Age_class*Plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Sweet gum"), family = genpois)
+microbialAgeSG2_lm <- glmmTMB(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Sweet gum"), family = genpois)
+
+Anova(microbialAgeSG2_lm)
 ```
+non-integer counts in a genpois modelNA/NaN function evaluationAnalysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_microbial
+                    Chisq Df Pr(>Chisq)  
+Age_class          3.0034  1    0.08309 .
+plot_age           0.7624  1    0.38259  
+Age_class:plot_age 2.3202  1    0.12771  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 ```{r}
-microbialAgeSG2_lm <- glmm(Percent_microbial~ Age_class*Plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Sweet gum"), family = genpois)
-```
+microbialAgeTP_lm <- glmmTMB(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Tulip poplar"), family = genpois)
 
+Anova(microbialAgeTP_lm)
+```
+non-integer counts in a genpois modelNA/NaN function evaluationAnalysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_microbial
+                    Chisq Df Pr(>Chisq)  
+Age_class          8.8390  2    0.01204 *
+plot_age           2.6985  1    0.10044  
+Age_class:plot_age 4.1974  2    0.12262  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 ```{r}
-microbialAgeTP_lm <- glmm(Percent_microbial~ Age_class*Plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 1 & Species == "Tulip poplar"), family = genpois)
+microbialAgeTP2_lm <- glmmTMB(Percent_microbial~ Age_class*plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Tulip poplar"), family = genpois)
+
+Anova(microbialAgeTP2_lm)
 ```
 
+non-integer counts in a genpois modelNA/NaN function evaluationAnalysis of Deviance Table (Type II Wald chisquare tests)
 
-```{r}
-microbialAgeTP2_lm <- glmm(Percent_microbial~ Age_class*Plot_age+(1|Plot/Tree_num), data = subset(damagePlots, Sample_period == 2 & Species == "Tulip poplar"), family = genpois)
-```
-
-
+Response: Percent_microbial
+                    Chisq Df Pr(>Chisq)
+Age_class          0.3022  1     0.5825
+plot_age           2.4897  1     0.1146
+Age_class:plot_age 0.7598  1     0.3834
 
 regression graphs
 ```{r}
