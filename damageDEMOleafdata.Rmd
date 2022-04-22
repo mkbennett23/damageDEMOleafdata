@@ -1362,11 +1362,20 @@ ggplot(damagePlots, aes(x=plot_age, y=Percent_microbial)) +
 *one model for each herbivory type, by species, sample period and age class*
 
 ```{r}
+
 herbChewingModel <- glmmTMB(Percent_chewed~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
+
+herbChewingModel_O <- glmmTMB(Percent_chewed~ Species*Age_class +(1|Plot/Tree_num), data = damageOct, family = genpois)
+
+
 
 ##model checking##
 model_checkChew <- simulateResiduals(herbChewingModel)
 plot(model_checkChew) 
+
+model_checkChewO <- simulateResiduals(herbChewingModel_O)
+plot(model_checkChewO) 
+
 
 #Amy also ran...#
 testZeroInflation(herbChewingModel)
@@ -1375,11 +1384,13 @@ testOutliers(herbChewingModel)
 
 drop1(herbChewingModel, test = 'Chisq')
 
+drop1(herbChewingModel_O, test = 'Chisq')
 
 Anova(herbChewingModel)
 
+Anova(herbChewingModel_O)
 
-emmeans(herbChewingModel, pairwise~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period) adjust="tukey", type = "response")
+emmeans(herbChewingModel, pairwise~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period), adjust="tukey", type = "response")
 ```
 
 ```{r}
@@ -1449,7 +1460,7 @@ emmeans(herbGallModel, pairwise~as.factor(Species)*as.factor(Age_class)*as.facto
 
 ```{r}
 herbivorywide <- damagePlots %>%
-  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class)
+  select (Plot, Species, Age_class, Leaf_num, Sample_period, Percent_chewed, Percent_mined, Percent_skeletonized, Percent_gall, plot_age, plot_age_class, Tree_num)
 
 herbivorylong <- gather(herbivorywide, Herbivory_type, Percent_damage, Percent_chewed:Percent_gall, factor_key=TRUE)
 herbivorylong
@@ -1529,7 +1540,146 @@ ggplot(data=barGraphStats(data=damageSapling, variable = "Percent_microbial", by
 
 
 
+```{r}
 
+herbTypeModel <- glmmTMB(Percent_damage~ Species*Age_class*Sample_period*Herbivory_type+(1|Plot/Tree_num), data = subset(herbivorylong, Age_class != "Seedling"), family = genpois)
+
+
+
+
+
+##model checking##
+model_checkHerb <- simulateResiduals(herbTypeModel)
+plot(model_checkHerb) 
+
+
+#Amy also ran...#
+testZeroInflation(herbTypeModel)
+testUniformity(herbTypeModel) 
+testOutliers(herbTypeModel) 
+
+drop1(herbTypeModel, test = 'Chisq')
+
+
+Anova(herbTypeModel)
+
+
+
+emmeans(herbTypeModel, pairwise~as.factor(Species)*as.factor(Age_class)*as.factor(Sample_period)*as.factor(Herbivory_type), adjust="tukey", type = "response")
+
+```
+Show in New Window
+Registered S3 methods overwritten by 'dbplyr':
+  method         from
+  print.tbl_lazy     
+  print.tbl_sql      
+-- Attaching packages --------------------------- tidyverse 1.3.1 --
+√ ggplot2 3.3.5     √ purrr   0.3.4
+√ tibble  3.1.6     √ dplyr   1.0.8
+√ tidyr   1.2.0     √ stringr 1.4.0
+√ readr   2.1.2     √ forcats 0.5.1
+-- Conflicts ------------------------------ tidyverse_conflicts() --
+x dplyr::collapse() masks nlme::collapse()
+x dplyr::filter()   masks stats::filter()
+x dplyr::lag()      masks stats::lag()
+Loading required package: Matrix
+
+Attaching package: �Matrix�
+
+The following objects are masked from �package:tidyr�:
+
+    expand, pack, unpack
+
+
+Attaching package: �lme4�
+
+The following object is masked from �package:nlme�:
+
+    lmList
+
+Classes and Methods for R developed in the
+Political Science Computational Laboratory
+Department of Political Science
+Stanford University
+Simon Jackman
+hurdle and zeroinfl functions by Achim Zeileis
+Loading required package: carData
+lattice theme set by effectsTheme()
+See ?effectsTheme for details.
+
+Attaching package: �car�
+
+The following object is masked from �package:dplyr�:
+
+    recode
+
+The following object is masked from �package:purrr�:
+
+    some
+
+This is DHARMa 0.4.5. For overview type '?DHARMa'. For recent changes, type news(package = 'DHARMa')
+Show in New Window
+The working directory was changed to C:/Users/hrusk/Dropbox (Smithsonian)/SERC_damageDEMO inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.
+Show in New Window
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_chewed
+                     Chisq Df Pr(>Chisq)    
+Species           161.1786  2     <2e-16 ***
+Age_class           0.2950  1     0.5870    
+Species:Age_class   2.7636  2     0.2511    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Show in New Window
+Description:df [24,968 x 10]
+Plot
+<chr>
+Species
+<fctr>
+Age_class
+<fctr>
+Leaf_num
+<chr>
+Sample_period
+<fctr>
+plot_age
+<int>
+plot_age_class
+<int>
+CI1	Sweet gum	Mature	CI1SGMat4L5	1	80	3	
+CI1	Beech	Mature	CI1BMat3L5	1	80	3	
+CI1	Sweet gum	Mature	CI1SGMat4L4	1	80	3	
+CI1	Beech	Mature	CI1BMat2L19	2	80	3	
+CI1	Tulip poplar	Mature	CI1TPMat5L8	1	80	3	
+CI1	Beech	Mature	CI1BMat3L4	1	80	3	
+CI1	Beech	Mature	CI1BMat3L1	1	80	3	
+CI1	Beech	Mature	CI1BMat2L6	1	80	3	
+CI1	Sweet gum	Mature	CI1SGMat4L6	1	80	3	
+CI1	Sweet gum	Mature	CI1SGMat3L11	2	80	3	
+...
+1-10 of 24,968 rows | 1-7 of 10 columns
+Show in New Window
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Percent_damage
+                                                   Chisq Df Pr(>Chisq)    
+Species                                         804.9993 23  < 2.2e-16 ***
+Age_class                                        15.2777 15    0.43161    
+Sample_period                                   203.6171 19  < 2.2e-16 ***
+Herbivory_type                                 1292.8602 25  < 2.2e-16 ***
+Species:Age_class                                14.8949  7    0.03737 *  
+Species:Sample_period                           120.0691 11  < 2.2e-16 ***
+Age_class:Sample_period                          12.1838  7    0.09467 .  
+Species:Herbivory_type                          678.3359 14  < 2.2e-16 ***
+Age_class:Herbivory_type                          9.3515  8    0.31352    
+Sample_period:Herbivory_type                    129.7756 11  < 2.2e-16 ***
+Species:Age_class:Sample_period                   3.8585  3    0.27716    
+Species:Age_class:Herbivory_type                 10.4548  7    0.16423    
+Species:Sample_period:Herbivory_type             39.7197  7  1.424e-06 ***
+Age_class:Sample_period:Herbivory_type            5.4933  4    0.24032    
+Species:Age_class:Sample_period:Herbivory_type    4.2213  6    0.64676    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 
 
