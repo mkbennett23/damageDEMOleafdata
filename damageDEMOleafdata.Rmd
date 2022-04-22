@@ -1362,7 +1362,7 @@ ggplot(damagePlots, aes(x=plot_age, y=Percent_microbial)) +
 *one model for each herbivory type, by species, sample period and age class*
 
 ```{r}
-herbChewingModel <- glmm(Percent_chewed~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
+herbChewingModel <- glmmTMB(Percent_chewed~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
 
 ##model checking##
 model_checkChew <- simulateResiduals(herbChewingModel)
@@ -1383,7 +1383,7 @@ emmeans(herbChewingModel, pairwise~as.factor(Species)*as.factor(Age_class)*as.fa
 ```
 
 ```{r}
-herbMiningModel <- glmm(Percent_mined~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
+herbMiningModel <- glmmTMB(Percent_mined~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
 
 ##model checking##
 model_checkMined <- simulateResiduals(herbMiningModel)
@@ -1404,7 +1404,7 @@ emmeans(herbMiningModel, pairwise~as.factor(Species)*as.factor(Age_class)*as.fac
 ```
 
 ```{r}
-herbSkeletonizingModel <- glmm(Percent_skeletonized~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
+herbSkeletonizingModel <- glmmTMB(Percent_skeletonized~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
 
 ##model checking##
 model_checkSkel <- simulateResiduals(herbSkeletonizingModel)
@@ -1425,7 +1425,7 @@ emmeans(herbSkeletonizingModel, pairwise~as.factor(Species)*as.factor(Age_class)
 ```
 
 ```{r}
-herbGallModel <- glmm(Percent_gall~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
+herbGallModel <- glmmTMB(Percent_gall~ Species*Age_class*Sample_period+(1|Plot/Tree_num), data = damagePlots, family = genpois)
 
 ##model checking##
 model_checkGall <- simulateResiduals(herbGallModel)
